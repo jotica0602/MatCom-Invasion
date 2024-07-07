@@ -1,12 +1,10 @@
-# Team members:
+# MatCom Invasion
+
+## Team members:
 |Name| Group |
 |--|--|
 |Alejandro Echevarria Brunet| C-212|
 |Daniela Guerrero Alvarez| C-211|
-
-
-
-# MatCom Invasion
 
 ## Description
 
