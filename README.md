@@ -1,10 +1,10 @@
 # MatCom Invasion
 
 ## Team members:
-|Name| Group |
-|--|--|
-|Alejandro Echevarria Brunet| C-212|
-|Daniela Guerrero Alvarez| C-211|
+|Name                       | Group |
+|---------------------------|-------|
+|Alejandro Echevarria Brunet| C-212 |
+|Daniela Guerrero Alvarez   | C-211 |
 
 ## Description
 
@@ -12,7 +12,7 @@ The dark skies over Earth announce an imminent threat: an alien invasion is unde
 
 # Objective
 
-Develop an arcade-style game in C, similar to the classic "Alien Invaders", where the player controls a spaceship to defend Earth from an alien invasion. This project aims to put into practice fundamental concepts of the Operating Systems subject, such as **event-driven programming, concurrency, memory management, and planning strategies**. 
+Develop an arcade-style game in C, similar to the classic "Space Invaders", where the player controls a spaceship to defend Earth from an alien invasion. This project aims to put into practice fundamental concepts of the Operating Systems subject, such as **event-driven programming, concurrency, memory management, and planning strategies**. 
 
 # Theoretical Elements
 
