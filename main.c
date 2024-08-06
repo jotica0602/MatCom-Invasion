@@ -212,13 +212,22 @@ void draw_screen(int *pRows, int *pCols, char ** grid){
     }
 }
 
-void fill_grid(int *pRows, int *pCols, char ** grid, int * enemies, Player * player){
-    for(int i = 0; i < *pRows; i++){
-        for(int j = 0; j < *pCols; j++){
-            grid[i] = malloc(*pCols * sizeof(char));
-        }
+char ** new_grid(int * pRows, int * pCols){
+    char ** grid = malloc(*pRows * sizeof(char *));
+    for(int j = 0; j < *pCols; j++){
+        grid[j] = malloc(*pCols * sizeof(char));
     }
-    
+    return grid;
+}
+
+void release(char ** grid, int *pRows, int *pCols){
+    for(int i = 0; i < *pRows; i++){
+        free(grid[i]);
+    }
+    free(grid);
+}
+
+void fill_grid(int *pRows, int *pCols, char ** grid, int * enemies, Player * player){
     for (int i = 0; i < *pRows; i++){
         for (int j = 0; j < *pCols; j++){
             if (j == 0 || j == *pCols - 1){
@@ -261,12 +270,7 @@ void handle_player_movement(Player * player, int *pRows, int *pCols, char ** gri
     grid[player->x][player->y] = 'A';
 }
 
-void release(char ** grid, int *pRows, int *pCols){
-    for(int i = 0; i < *pRows; i++){
-        free(grid[i]);
-    }
-    free(grid);
-}
+
 
 int main(){
     pthread_t input_handler;
@@ -275,15 +279,14 @@ int main(){
     int enemies = 1;
     int direction = 1;
     get_terminal_size(&rows, &cols);
-    char **grid = malloc(rows * sizeof(char *));
-    // char grid[rows][cols];
-
     Player *player = new_player(&rows, &cols);
+    char **grid = new_grid(&rows,&cols);
     fill_grid(&rows, &cols, grid, &enemies, player);
+
     
     // // starts here
     // system("clear");
-    // // welcome();
+    // welcome();
 
     // // Proyectile initialization
     int alx = player->x;
@@ -370,7 +373,6 @@ int main(){
     }
 
     pthread_join(input_handler, NULL);
-    restore_terminal();
     set_conio_mode(1);
     free(player);
     release(grid, &rows, &cols);
