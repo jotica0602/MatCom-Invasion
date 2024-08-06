@@ -6,11 +6,12 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#define true 1
 #define false 0
-#define enemy 'M'
+#define true 1
+#define left 0
+#define right 1
 
-void getTerminalSize(int *rows, int *cols)
+void get_terminal_size(int *rows, int *cols)
 {
     struct winsize w;
     // Getting terminal dimensions
@@ -57,6 +58,8 @@ void clear_screen(){
     printf("\033[H\033[J");
 }
 
+// ==> PLAYER SECTION <== //
+
 typedef struct{
     int y;
     int x;
@@ -67,10 +70,37 @@ typedef struct{
     int moved_right;
 } Player;
 
+Player *new_player(int *rows, int *cols){
+    Player *player = (Player *)malloc(sizeof(Player));
+    player->y = *cols / 2;
+    player->x = *rows - 1;
+    player->can_shoot = false;
+    player->proyectile_is_alive = false;
+    player->is_alive = true;
+    player->moved_left = false;
+    player->moved_right = false;
+    return player;
+}
+
+// ==> PLAYER SECTION <== //
+
+
+
+// ==> ENEMY SECTION <== //
 typedef struct{
     int y;
     int x;
-} PlayerLaser;
+    int is_alive;
+} Enemy;
+
+Enemy *new_enemy(int row, int col){
+    Enemy *enemy = (Enemy *)malloc(sizeof(Enemy));
+    enemy->x = row;
+    enemy->y = col;
+    enemy->is_alive = true;
+    return enemy;
+}
+// ==> ENEMY SECTION <== //
 
 void *read_input(void *arg){
     Player *player = (Player *)arg;
@@ -122,17 +152,6 @@ void welcome(){
     getchar();
 }
 
-Player *new_player(int *rows, int *cols){
-    Player *player = (Player *)malloc(sizeof(Player));
-    player->y = *cols / 2;
-    player->x = *rows - 1;
-    player->can_shoot = false;
-    player->proyectile_is_alive = false;
-    player->is_alive = true;
-    player->moved_left = false;
-    player->moved_right = false;
-    return player;
-}
 
 void draw_screen(int *pRows, int *pCols, char grid[*pRows][*pCols]){
     for (int i = 0; i < *pRows; i++){
@@ -156,69 +175,93 @@ void fill_grid(int *pRows, int *pCols, char grid[*pRows][*pCols], int * enemies,
                 grid[i][j] = ' ';
             }
             else{
-                grid[i][j] = enemy;
-                *enemies++;
+                grid[i][j] = ' ';
+                // *enemies++;
             }
         }
     }
     grid[player->x][player->y] = 'A';
 }
 
-
 void handle_player_movement(Player * player, int *pRows, int *pCols, char grid[*pRows][*pCols]){
-    int temp;
+    int temp = player->y;
+    grid[player->x][temp] = ' ';
     if(player->moved_left){
         player->moved_left = false;
-        temp = player->y;
         player->y--;
         if(player->y<1){
             player->y = 1;
             return;
         }
-        grid[player->x][temp] = ' ';
-        grid[player->x][player->y] = 'A';
     }
     else if(player->moved_right){
         player->moved_right = false;
-        temp = player->y;
         player->y++;
         if(player->y > *pCols - 2){
             player->y = *pCols - 2;
             return;
         }
-        grid[player->x][temp] = ' ';
-        grid[player->x][player->y] = 'A';
     }
+    grid[player->x][player->y] = 'A';
+}
+
+typedef struct{
+    Enemy *enemy;
+    int *pRows;
+    int *pCols;
+    char **grid;
+    int *direction;
+
+}EnemyMovementParams;
+
+void handle_enemy_movement(Enemy *enemy, int *pRows, int *pCols, char grid[*pRows][*pCols], int *direction) {
+    
+    grid[enemy->x][enemy->y] = ' ';
+
+    // Check for boundary conditions and update direction
+    if (enemy->y == 1){
+        *direction = right;  
+        if(enemy->x < *pRows - 3) enemy->x++;
+        enemy->y++;
+    } else if (enemy->y == *pCols - 2){
+        *direction = left;
+        if(enemy->x < *pRows - 3) enemy->x++;
+        enemy->y--;
+    }
+
+    // Update position based on the current direction
+    if (*direction == right) {
+        enemy->y++;
+    } else if (*direction == left) {
+        enemy->y--;
+    }
+    
+    // Place the enemy at the new position
+    grid[enemy->x][enemy->y] = 'M';
 }
 
 
-
 int main(){
-    int rows, cols;
-    int enemies = 0;
-    getTerminalSize(&rows, &cols);
-    char grid[rows][cols];
     pthread_t input_handler;
-    
-    // draw_screen(grid,&grid[sizeof(grid)/sizeof(char)-1]);
-    // exit(0);
+    int rows, cols;
+    int enemies = 1;
+    int direction = 1;
 
+    get_terminal_size(&rows, &cols);
+    char grid[rows][cols];
     Player *player = new_player(&rows, &cols);
+    
     fill_grid(&rows, &cols, grid, &enemies, player);
-    // printf("starts here:\n");
+    
+    // starts here
     system("clear");
     // welcome();
-
-    // Player initialization
-    // exit(0);
 
     // Proyectile initialization
     int alx = player->x;
     int aly = player->y + 1;
     int oldx, oldy;
 
-    printf("%d", player->y);
-    // setup_terminal();
     set_conio_mode(0);
 
     if (pthread_create(&input_handler, NULL, read_input, (void *)player) != 0){
@@ -231,15 +274,28 @@ int main(){
         printf("Keyreader thread successfully created.");
     }
 
-    while (enemies || player->is_alive){
-        system("clear");
 
+    // ==> REMOVE THIS WHEN YOU FINISH <==
+    enemies = 1;
+    grid[rows/2][cols/2] = 'M';
+    Enemy * enemy =  new_enemy(rows/2, cols/2);
+    printf("\n(%d,%d)\n",enemy->x,enemy->y);
+    // exit(0);
+    // ==> REMOVE THIS WHEN YOU FINISH <==
+
+    while (enemies){
+        system("clear");
+        
         // draw grid
         draw_screen(&rows,&cols,grid);
 
-        // player movement
+        // handling player movement
         handle_player_movement(player, &rows, &cols, grid);
 
+        // enemy movement
+        handle_enemy_movement(enemy, &rows, &cols, grid, &direction);
+
+        
         if (player->can_shoot && !player->proyectile_is_alive)
         {
             alx = player->x - 1;
@@ -251,7 +307,7 @@ int main(){
             player->proyectile_is_alive = true;
         }
 
-        if (player->proyectile_is_alive && grid[alx - 1][aly] == enemy)
+        if (player->proyectile_is_alive && grid[alx - 1][aly] == 'M')
         {
             grid[alx][aly] = ' ';
             grid[alx - 1][aly] = ' ';
@@ -277,15 +333,11 @@ int main(){
             alx--;
             grid[alx][aly] = '^';
         }
-
-        if(!enemies || !player->is_alive){
-
-        }
         usleep(10000);
     }
 
     pthread_join(input_handler, NULL);
-    restore_terminal();
+    // restore_terminal();
     set_conio_mode(1);
     free(player);
     printf("end");
