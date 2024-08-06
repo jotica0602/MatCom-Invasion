@@ -11,6 +11,7 @@
 #define left 0
 #define right 1
 
+// ==> BEGIN TERMINAL SECTION <==
 void get_terminal_size(int *rows, int *cols)
 {
     struct winsize w;
@@ -58,7 +59,23 @@ void clear_screen(){
     printf("\033[H\033[J");
 }
 
-// ==> PLAYER SECTION <== //
+void welcome(){
+    printf("\t \t \t \tWELCOME SOLDIER \n \n");
+    sleep(2);
+    printf("\t THE COMMAND PROMPT INVADERS ARE BACK AND EVERYONE NEEDS A HERO \n \n ");
+    sleep(2);
+    printf("\t \t DEFEND YOUR OPERATING SYSTEM NO MATTER WHAT\n \n");
+    sleep(2);
+    printf("\t \t \t \tGOOD LUCK!!!");
+    sleep(2);
+    printf("\n\n\t\t\t  PRESS ANY KEY TO START");
+    getchar();
+}
+
+// ==> END TERMINAL SECTION <==
+
+
+// ==> BEGIN PLAYER SECTION <== //
 
 typedef struct{
     int y;
@@ -82,28 +99,8 @@ Player *new_player(int *rows, int *cols){
     return player;
 }
 
-// ==> PLAYER SECTION <== //
-
-
-
-// ==> ENEMY SECTION <== //
-typedef struct{
-    int y;
-    int x;
-    int is_alive;
-} Enemy;
-
-Enemy *new_enemy(int row, int col){
-    Enemy *enemy = (Enemy *)malloc(sizeof(Enemy));
-    enemy->x = row;
-    enemy->y = col;
-    enemy->is_alive = true;
-    return enemy;
-}
-// ==> ENEMY SECTION <== //
-
-void *read_input(void *arg){
-    Player *player = (Player *)arg;
+void *read_input(void *params){
+    Player *player = (Player *)params;
     char key;
     while (1){
         key = getchar();
@@ -139,70 +136,23 @@ void *read_input(void *arg){
     return NULL;
 }
 
-void welcome(){
-    printf("\t \t \t \tWELCOME SOLDIER \n \n");
-    sleep(2);
-    printf("\t THE COMMAND PROMPT INVADERS ARE BACK AND EVERYONE NEEDS A HERO \n \n ");
-    sleep(2);
-    printf("\t \t DEFEND YOUR OPERATING SYSTEM NO MATTER WHAT\n \n");
-    sleep(2);
-    printf("\t \t \t \tGOOD LUCK!!!");
-    sleep(2);
-    printf("\n\n\t\t\t  PRESS ANY KEY TO START");
-    getchar();
-}
+// ==> END PLAYER SECTION <== //
 
 
-void draw_screen(int *pRows, int *pCols, char grid[*pRows][*pCols]){
-    for (int i = 0; i < *pRows; i++){
-        for (int j = 0; j < *pCols; j++){
-            printf("%3c", grid[i][j]);
-        }
-        printf("\n");
-    }
-}
 
-void fill_grid(int *pRows, int *pCols, char grid[*pRows][*pCols], int * enemies, Player * player){
-    for (int i = 0; i < *pRows; i++){
-        for (int j = 0; j < *pCols; j++){
-            if (j == 0 || j == *pCols - 1){
-                grid[i][j] = '|';
-            }
-            else if (j < *pCols / 4 || j > (3 * (*pCols) / 4)){
-                grid[i][j] = ' ';
-            }
-            else if (i > *pRows / 2 - 5){
-                grid[i][j] = ' ';
-            }
-            else{
-                grid[i][j] = ' ';
-                // *enemies++;
-            }
-        }
-    }
-    grid[player->x][player->y] = 'A';
-}
+// ==> BEGIN ENEMY SECTION <== //
+typedef struct{
+    int y;
+    int x;
+    int is_alive;
+} Enemy;
 
-void handle_player_movement(Player * player, int *pRows, int *pCols, char grid[*pRows][*pCols]){
-    int temp = player->y;
-    grid[player->x][temp] = ' ';
-    if(player->moved_left){
-        player->moved_left = false;
-        player->y--;
-        if(player->y<1){
-            player->y = 1;
-            return;
-        }
-    }
-    else if(player->moved_right){
-        player->moved_right = false;
-        player->y++;
-        if(player->y > *pCols - 2){
-            player->y = *pCols - 2;
-            return;
-        }
-    }
-    grid[player->x][player->y] = 'A';
+Enemy *new_enemy(int row, int col){
+    Enemy *enemy = (Enemy *)malloc(sizeof(Enemy));
+    enemy->x = row;
+    enemy->y = col;
+    enemy->is_alive = true;
+    return enemy;
 }
 
 typedef struct{
@@ -214,8 +164,12 @@ typedef struct{
 
 }EnemyMovementParams;
 
-void handle_enemy_movement(Enemy *enemy, int *pRows, int *pCols, char grid[*pRows][*pCols], int *direction) {
+void handle_enemy_movement(Enemy *enemy, int *pRows, int *pCols, char ** grid, int *direction) {
     
+    if(!enemy->is_alive) {
+        grid[enemy->x][enemy->y] = ' ';
+        return;
+    }
     grid[enemy->x][enemy->y] = ' ';
 
     // Check for boundary conditions and update direction
@@ -240,24 +194,92 @@ void handle_enemy_movement(Enemy *enemy, int *pRows, int *pCols, char grid[*pRow
     grid[enemy->x][enemy->y] = 'M';
 }
 
+void * enemy_movement_thread(void *params){
+    EnemyMovementParams *emp = (EnemyMovementParams *) params;
+    while(true){
+        handle_enemy_movement(emp->enemy,emp->pRows,emp->pCols,emp->grid,emp->direction);
+        sleep(1);
+    }
+    return NULL;
+}
+// ==> END ENEMY SECTION <== //
+
+void draw_screen(int *pRows, int *pCols, char ** grid){
+    for (int i = 0; i < *pRows; i++){
+        for (int j = 0; j < *pCols; j++){
+            printf("%3c", grid[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void fill_grid(int *pRows, int *pCols, char ** grid, int * enemies, Player * player){
+    for(int i = 0; i < *pRows; i++){
+        for(int j = 0; j < *pCols; j++){
+            grid[i] = malloc(*pCols * sizeof(char));
+        }
+    }
+    
+    for (int i = 0; i < *pRows; i++){
+        for (int j = 0; j < *pCols; j++){
+            if (j == 0 || j == *pCols - 1){
+                grid[i][j] = '|';
+            }
+            else if (j < *pCols / 4 || j > (3 * (*pCols) / 4)){
+                grid[i][j] = ' ';
+            }
+            else if (i > *pRows / 2 - 5){
+                grid[i][j] = ' ';
+            }
+            else{
+                grid[i][j] = ' ';
+                // *enemies++;
+            }
+        }
+    }
+    grid[player->x][player->y] = 'A';
+}
+
+void handle_player_movement(Player * player, int *pRows, int *pCols, char ** grid){
+    int temp = player->y;
+    grid[player->x][temp] = ' ';
+    if(player->moved_left){
+        player->moved_left = false;
+        player->y--;
+        if(player->y<1){
+            player->y = 1;
+            return;
+        }
+    }
+    else if(player->moved_right){
+        player->moved_right = false;
+        player->y++;
+        if(player->y > *pCols - 2){
+            player->y = *pCols - 2;
+            return;
+        }
+    }
+    grid[player->x][player->y] = 'A';
+}
 
 int main(){
     pthread_t input_handler;
+    pthread_t enemy_thread;
     int rows, cols;
     int enemies = 1;
     int direction = 1;
-
     get_terminal_size(&rows, &cols);
-    char grid[rows][cols];
+    char **grid = malloc(rows * sizeof(char *));
+    // char grid[rows][cols];
+
     Player *player = new_player(&rows, &cols);
-    
     fill_grid(&rows, &cols, grid, &enemies, player);
     
-    // starts here
-    system("clear");
-    // welcome();
+    // // starts here
+    // system("clear");
+    // // welcome();
 
-    // Proyectile initialization
+    // // Proyectile initialization
     int alx = player->x;
     int aly = player->y + 1;
     int oldx, oldy;
@@ -275,15 +297,21 @@ int main(){
     }
 
 
-    // ==> REMOVE THIS WHEN YOU FINISH <==
+    // // ==> REMOVE THIS WHEN YOU FINISH <==
     enemies = 1;
     grid[rows/2][cols/2] = 'M';
     Enemy * enemy =  new_enemy(rows/2, cols/2);
-    printf("\n(%d,%d)\n",enemy->x,enemy->y);
-    // exit(0);
-    // ==> REMOVE THIS WHEN YOU FINISH <==
+    EnemyMovementParams emp = {enemy, &rows, &cols, grid, &direction};
 
-    while (enemies){
+    if (pthread_create(&enemy_thread, NULL, enemy_movement_thread, (void *)&emp)){
+        fprintf(stderr, "Error creating the enemy movement thread.");
+        return 1;
+    }
+    // printf("\n(%d,%d)\n",enemy->x,enemy->y);
+    // // exit(0);
+    // // ==> REMOVE THIS WHEN YOU FINISH <==
+
+    while (true){
         system("clear");
         
         // draw grid
@@ -292,10 +320,6 @@ int main(){
         // handling player movement
         handle_player_movement(player, &rows, &cols, grid);
 
-        // enemy movement
-        handle_enemy_movement(enemy, &rows, &cols, grid, &direction);
-
-        
         if (player->can_shoot && !player->proyectile_is_alive)
         {
             alx = player->x - 1;
@@ -310,14 +334,15 @@ int main(){
         if (player->proyectile_is_alive && grid[alx - 1][aly] == 'M')
         {
             grid[alx][aly] = ' ';
-            grid[alx - 1][aly] = ' ';
+            grid[alx - 1][aly] = 'X';
             player->proyectile_is_alive = false;
+            enemy->is_alive=false;
             alx = player->x;
             aly = player->y;
             enemies--;
         }
 
-        if (alx == 0)
+        if (alx == 1)
         {
             grid[alx][aly] = ' ';
             grid[alx - 1][aly] = ' ';
@@ -337,7 +362,7 @@ int main(){
     }
 
     pthread_join(input_handler, NULL);
-    // restore_terminal();
+    restore_terminal();
     set_conio_mode(1);
     free(player);
     printf("end");
