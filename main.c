@@ -132,12 +132,11 @@ void *read_input(void *params){
             }
         }
     }
-    usleep(10000);
+    // usleep(10000);
     return NULL;
 }
 
 // ==> END PLAYER SECTION <== //
-
 
 
 // ==> BEGIN ENEMY SECTION <== //
@@ -262,6 +261,13 @@ void handle_player_movement(Player * player, int *pRows, int *pCols, char ** gri
     grid[player->x][player->y] = 'A';
 }
 
+void release(char ** grid, int *pRows, int *pCols){
+    for(int i = 0; i < *pRows; i++){
+        free(grid[i]);
+    }
+    free(grid);
+}
+
 int main(){
     pthread_t input_handler;
     pthread_t enemy_thread;
@@ -286,6 +292,7 @@ int main(){
 
     set_conio_mode(0);
 
+    // Creating Key Reader Thread
     if (pthread_create(&input_handler, NULL, read_input, (void *)player) != 0){
         fprintf(stderr, "Error creating the keyreader thread.");
         restore_terminal();
@@ -303,6 +310,7 @@ int main(){
     Enemy * enemy =  new_enemy(rows/2, cols/2);
     EnemyMovementParams emp = {enemy, &rows, &cols, grid, &direction};
 
+    // Creating Enemy Movement Thread
     if (pthread_create(&enemy_thread, NULL, enemy_movement_thread, (void *)&emp)){
         fprintf(stderr, "Error creating the enemy movement thread.");
         return 1;
@@ -358,13 +366,14 @@ int main(){
             alx--;
             grid[alx][aly] = '^';
         }
-        usleep(10000);
+        usleep(7000);
     }
 
     pthread_join(input_handler, NULL);
     restore_terminal();
     set_conio_mode(1);
     free(player);
+    release(grid, &rows, &cols);
     printf("end");
     return 0;
 }
