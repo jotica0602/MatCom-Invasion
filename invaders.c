@@ -7,7 +7,16 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-
+pthread_mutex_t lock;
+int max;
+int is_over = FALSE;
+int score = 0;
+int lives = 5;
+enum Collision{
+    LEFT_COLLISION,
+    RIGHT_COLLISION,
+    NO_COLLISION,
+};
 
 // ==> BEGIN TERMINAL SECTION <==
 void get_terminal_size(int *rows, int *cols)
@@ -22,6 +31,7 @@ void get_terminal_size(int *rows, int *cols)
     *rows = w.ws_row;
     *cols = w.ws_col / 4;
 }
+
 
 void set_conio_mode(int mode)
 {
@@ -74,7 +84,6 @@ void welcome(){
 
 
 // ==> BEGIN PLAYER SECTION <== //
-
 typedef struct{
     int y;
     int x;
@@ -152,17 +161,34 @@ Enemy *new_enemy(int row, int col){
     return enemy;
 }
 
-typedef struct{
-    Enemy *enemy;
+void free_enemies(Enemy * enemies[]){
+    for(int i = 0; i < NUM_ENEMIES; i++){
+        free(enemies[i]);
+    }
+}
+
+typedef struct {
+    Enemy **enemies;
+    int num_enemies;
     int *pRows;
     int *pCols;
     char **grid;
     int *direction;
+} AllEnemiesMovementParams;
 
-}EnemyMovementParams;
+AllEnemiesMovementParams * new_Enemy_Movement_Params(Enemy * enemies[], int *pRows, int *pCols, char **grid, int *direction){
+    AllEnemiesMovementParams *aemp = (AllEnemiesMovementParams*)malloc(sizeof(AllEnemiesMovementParams));
+    aemp->direction = direction;
+    aemp->enemies = enemies;
+    aemp->grid = grid;
+    aemp->num_enemies = NUM_ENEMIES;
+    aemp->pCols = pCols;
+    aemp->pRows = pRows;
+    return aemp;
+}
 
 void handle_enemy_movement(Enemy *enemy, int *pRows, int *pCols, char ** grid, int *direction) {
-    
+    max = enemy->is_alive && max < enemy->x ? enemy->x : max;
     if(!enemy->is_alive) {
         grid[enemy->x][enemy->y] = ' ';
         return;
@@ -181,21 +207,39 @@ void handle_enemy_movement(Enemy *enemy, int *pRows, int *pCols, char ** grid, i
     }
 
     // Update position based on the current direction
-    if (*direction == RIGHT) {
+    if (*direction == RIGHT){
         enemy->y++;
-    } else if (*direction == LEFT) {
+    } else if (*direction == LEFT){
         enemy->y--;
     }
     
     // Place the enemy at the new position
-    grid[enemy->x][enemy->y] = 'M';
+    grid[enemy->x][enemy->y] = 'M';   
 }
 
-void * enemy_movement_thread(void *params){
-    EnemyMovementParams *emp = (EnemyMovementParams *) params;
+void handle_enemies_movement(Enemy * enemies[], int num_enemies, int *pRows, int *pCols, char **grid, int * direction) {
+    pthread_mutex_lock(&lock);
+    enum Collision collision = NO_COLLISION;
+    if(*direction){
+        for(int i = NUM_ENEMIES - 1; i>=0; i--){
+            handle_enemy_movement(enemies[i], pRows, pCols, grid, direction);
+        }
+    }
+    else{
+        for (int i = 0; i < NUM_ENEMIES; i++) {
+            // for(int j = 0; j <= 5;j++){
+            handle_enemy_movement(enemies[i], pRows, pCols, grid, direction);
+            // }
+        }
+    }
+    pthread_mutex_unlock(&lock);
+}
+
+void * enemies_movement_thread(void *params){
+    AllEnemiesMovementParams *aemp = (AllEnemiesMovementParams*)params;
     while(TRUE){
-        handle_enemy_movement(emp->enemy,emp->pRows,emp->pCols,emp->grid,emp->direction);
-        sleep(1);
+        handle_enemies_movement(aemp->enemies, aemp->num_enemies, aemp->pRows, aemp->pCols, aemp->grid, aemp->direction);
+        usleep(1000000);
     }
     return NULL;
 }
@@ -208,6 +252,7 @@ void draw_screen(int *pRows, int *pCols, char ** grid){
         }
         printf("\n");
     }
+    printf("  Score:%-d-----------------------------------------------------------------------------------------------------------------------------------------------Lives:%d\t\t\t\n" , score, lives);
 }
 
 char ** new_grid(int * pRows, int * pCols){
@@ -218,7 +263,7 @@ char ** new_grid(int * pRows, int * pCols){
     return grid;
 }
 
-void release(char ** grid, int *pRows, int *pCols){
+void free_grid(char ** grid, int *pRows, int *pCols){
     for(int i = 0; i < *pRows; i++){
         free(grid[i]);
     }
@@ -239,9 +284,14 @@ void fill_grid(int *pRows, int *pCols, char ** grid, Enemy ** enemies, Player * 
                 grid[i][j] = '|';
             }
             else if (i>= ub && i < lowb && j >= lb && j < rb){
-                grid[i][j] = 'M';
-                enemies[index] = new_enemy(i,j);
-                index++;
+                if(index < NUM_ENEMIES){
+                    grid[i][j] = 'M';
+                    enemies[index] = new_enemy(i,j);
+                    index++;
+                }
+                else{
+                    grid[i][j] = ' ';
+                }
             }
             else{
                 grid[i][j] = ' ';
@@ -274,19 +324,23 @@ void handle_player_movement(Player * player, int *pRows, int *pCols, char ** gri
     grid[player->x][player->y] = 'A';
 }
 
+int check_game_state(int * pRows){
+    if(max == *pRows - 1){
+        return TRUE;
+    }
+    return FALSE;
+}
+
 int main(){
     set_conio_mode(0);
-    pthread_t input_handler;
-    pthread_t enemy_thread;
     int rows, cols;
-    // rows = 16; 
-    // cols = 53;
-    // int enemies = 1;
-    int direction = 1;
-    get_terminal_size(&rows, &cols);
+    rows = 16; 
+    cols = 53;
+    int direction = LEFT;
+    // get_terminal_size(&rows, &cols);
     printf("%d x %d", rows, cols);
 
-    Enemy * enemies[55];
+    Enemy * enemies[NUM_ENEMIES];
     Player *player = new_player(&rows, &cols);
     char **grid = new_grid(&rows,&cols);
     fill_grid(&rows, &cols, grid, enemies, player);
@@ -303,6 +357,7 @@ int main(){
 
 
     // Creating Key Reader Thread
+    pthread_t input_handler;
     if (pthread_create(&input_handler, NULL, read_input, (void *)player) != 0){
         fprintf(stderr, "Error creating the keyreader thread.");
         restore_terminal();
@@ -313,17 +368,35 @@ int main(){
         printf("Keyreader thread successfully created.");
     }
 
-    // EnemyMovementParams emp = new_Enemy_Movement_Params();
+    // Initializing mutex
+    if (pthread_mutex_init(&lock, NULL) != 0) {
+        fprintf(stderr, "Error initializing mutex\n");
+        return 1;
+    }
+    else{
+        printf("Mutex thread succesfully created");
+    }
 
-    while (TRUE){
+    pthread_t enemy_movement_thread;
+    AllEnemiesMovementParams *aemp = new_Enemy_Movement_Params(enemies, &rows, &cols, grid, &direction);
+    if (pthread_create(&enemy_movement_thread, NULL, enemies_movement_thread, (void *)aemp)) {
+        fprintf(stderr, "Error creating thread\n");
+        return 1;
+    }
+    else{
+        printf("Enemy movement thread successfully created.");
+    }
+
+    while (!is_over){
         system("clear");
-        
+
         // draw grid
+        pthread_mutex_lock(&lock);
         draw_screen(&rows,&cols,grid);
+        pthread_mutex_unlock(&lock);
 
         // handling player movement
         handle_player_movement(player, &rows, &cols, grid);
-
         if (player->can_shoot && !player->proyectile_is_alive)
         {
             alx = player->x - 1;
@@ -338,11 +411,12 @@ int main(){
         if (player->proyectile_is_alive && grid[alx - 1][aly] == 'M')
         {
             grid[alx][aly] = ' ';
-            grid[alx - 1][aly] = 'X';
+            grid[alx - 1][aly] = ' ';
             player->proyectile_is_alive = FALSE;
             // enemy->is_alive=FALSE;
             alx = player->x;
             aly = player->y;
+            score++;
             // enemies--;
         }
 
@@ -362,13 +436,17 @@ int main(){
             alx--;
             grid[alx][aly] = '^';
         }
+        is_over = check_game_state(&rows);
         usleep(7000);
     }
 
+    pthread_mutex_destroy(&lock);
     pthread_join(input_handler, NULL);
+    // pthread_join(enemy_movement_thread, NULL);
     set_conio_mode(1);
     free(player);
-    release(grid, &rows, &cols);
+    free_enemies(enemies);
+    free_grid(grid, &rows, &cols);
     printf("end");
     return 0;
 }
