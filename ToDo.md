@@ -1,9 +1,10 @@
 # To Do
 - [x]   Player Actions listener.
-- [x]   Single Enemy Movement listener.
+- [x]   ~~Single Enemy Movement listener.~~
 - [x]   Multi-enemy movement:
-  - [x]   Add mutexes to avoid race conditions on screen drawing and enemy movement.
+  - [x]   Add mutexes to avoid race between screen drawing and enemy movement.
   - [x]   Fix left and right bounds conditions.
+- [ ]  Enemy destruction.
 - [ ]   Multi-enemy laser shots.
 - [ ]   Game Over functionality:
   - [x]   When the enemy reaches the player.
