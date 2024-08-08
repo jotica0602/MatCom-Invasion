@@ -1,4 +1,4 @@
-#include "invaders.h"
+#include "globals.h"
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -7,13 +7,16 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-pthread_mutex_t lock;
+#include <stdbool.h>
+#include <time.h>
 
+pthread_mutex_t grid_lock;
 int g_max;
-int g_is_over = FALSE;
+int g_is_over = false;
 int g_score = 0;
 int g_lives = 5;
-int g_win_flag = FALSE;
+int g_win_flag = false;
+
 
 
 // ==> BEGIN TERMINAL SECTION <==
@@ -96,11 +99,11 @@ Player *new_player(int *rows, int *cols){
     Player *player = (Player *)malloc(sizeof(Player));
     player->y = *cols / 2;
     player->x = *rows - 1;
-    player->can_shoot = FALSE;
-    player->proyectile_is_alive = FALSE;
-    player->is_alive = TRUE;
-    player->moved_LEFT = FALSE;
-    player->moved_RIGHT = FALSE;
+    player->can_shoot = false;
+    player->proyectile_is_alive = false;
+    player->is_alive = true;
+    player->moved_LEFT = false;
+    player->moved_RIGHT = false;
     return player;
 }
 
@@ -125,23 +128,23 @@ void *read_input(void *params){
             switch (key){
             // LEFT
             case 'a':
-                player->moved_LEFT = TRUE;
+                player->moved_LEFT = true;
                 // printf("%d",player->y);
                 // printf("LEFT");
                 break;
             // RIGHT
             case 'd':
-                player->moved_RIGHT = TRUE;
+                player->moved_RIGHT = true;
                 // printf("%d",player->y);
                 // printf("RIGHT");
                 break;
             // shot
             case 'j':
-                player->can_shoot = TRUE;
+                player->can_shoot = true;
                 break;
             // quit
             case 'q': 
-                g_is_over = TRUE;          
+                g_is_over = true;          
                 break;
             default:
                 break;
@@ -164,7 +167,7 @@ Enemy *new_enemy(int row, int col){
     Enemy *enemy = (Enemy *)malloc(sizeof(Enemy));
     enemy->x = row;
     enemy->y = col;
-    enemy->is_alive = TRUE;
+    enemy->is_alive = true;
     return enemy;
 }
 
@@ -203,7 +206,7 @@ enum Collision{
 };
 
 void handle_enemy_movement(Enemy *enemy, int *pRows, int *pCols, char ** grid, int *direction, enum Collision * collision) {
-    // enemy->is_alive = FALSE;
+    // enemy->is_alive = false;
     if(!enemy->is_alive) return;    
     g_max = g_max < enemy->x ? enemy->x : g_max;
     grid[enemy->x][enemy->y] = ' ';
@@ -234,9 +237,8 @@ void handle_enemy_collision(Enemy * enemies[],int num_enemies, int *pRows, int *
 
 
 void handle_enemies_movement(Enemy * enemies[], int num_enemies, int *pRows, int *pCols, char **grid, int * direction) {
+    // pthread_mutex_lock(&lock);
     enum Collision collision = NO_COLLISION;
-
-    pthread_mutex_lock(&lock);
     if(*direction == RIGHT){
         // loop backwards
         for (int i = NUM_ENEMIES - 1; i >= 0; i--){
@@ -258,21 +260,69 @@ void handle_enemies_movement(Enemy * enemies[], int num_enemies, int *pRows, int
             }
         }
     }
-    pthread_mutex_unlock(&lock);
+    // pthread_mutex_unlock(&lock);
 }
 
 
-void * enemies_movement_thread(void *params){
+void *enemies_movement_thread(void *params){
     AllEnemiesMovementParams *aemp = (AllEnemiesMovementParams*)params;
     while(!(*(aemp->terminate))){
-        
+        pthread_mutex_lock(&grid_lock);
         handle_enemies_movement(aemp->enemies, aemp->num_enemies, aemp->pRows, aemp->pCols, aemp->grid, aemp->direction);
+        pthread_mutex_unlock(&grid_lock);
         // usleep(100000);
         // usleep(1050000);
-        usleep(700000);
+        usleep(900000);
     }
     return NULL;
 }
+
+void move_enemy_bullets(char **grid, Bullet *bullets[], int *pRows, int *bullets_count){
+    for(int i = 0; i < 11; i++){
+        if(bullets[i] != NULL){
+            if(bullets[i]->x == *pRows - 1){
+                grid[bullets[i]->x][bullets[i]->y] = ' ';
+                bullets[i] = NULL;
+                continue;
+            }else{
+                grid[bullets[i]->x][bullets[i]->y] = ' ';
+                bullets[i]->x++;
+                grid[bullets[i]->x][bullets[i]->y] = '*';
+            }
+        }
+    }
+    // usleep(4000);
+}
+
+typedef struct 
+{
+    char **grid;
+    Bullet ** bullets;
+    int *pRows;
+    int *bullets_count;
+}EnemyBulletThreadParams;
+
+EnemyBulletThreadParams *new_enemy_bullet_thread_params(char **grid, Bullet *bullets[], int *pRows, int *bullets_count){
+    EnemyBulletThreadParams *ebtp = (EnemyBulletThreadParams*)malloc(sizeof(EnemyBulletThreadParams));
+    ebtp->grid = grid;
+    ebtp->bullets = bullets;
+    ebtp->pRows = pRows;
+    ebtp->bullets_count = bullets_count;
+    return ebtp;
+}
+
+void *enemy_bullet_thread_function(void *params){
+    EnemyBulletThreadParams *ebtp = (EnemyBulletThreadParams*)params;
+    while(true){
+        pthread_mutex_lock(&grid_lock);
+        move_enemy_bullets(ebtp->grid, ebtp->bullets, ebtp->pRows, ebtp->bullets_count);
+        pthread_mutex_unlock(&grid_lock);
+        usleep(90000);
+    }
+
+    return NULL;
+}
+
 // ==> END ENEMY SECTION <== //
 
 void draw_screen(int *pRows, int *pCols, char ** grid){
@@ -302,11 +352,11 @@ void free_grid(char ** grid, int *pRows, int *pCols){
 
 void fill_grid(int *pRows, int *pCols, char ** grid, Enemy ** enemies, Player * player){
     int index = 0;
-    int lbx = ceil((6 * *pRows)/100);        // lower bound for x
+    int lbx = ceil((10 * *pRows)/100);        // lower bound for x
     int ubx = lbx + 5;                      // upper bound for x
     int lby = ceil((32 * *pCols)/100);       // lower bound for y
     int uby = lby + 22;                       // upper bound for y
-    int used = FALSE;
+    int used = false;
     // printf("\n");
     for (int i = 0; i < *pRows; i++){
         for (int j = 0; j < *pCols; j++){
@@ -330,9 +380,9 @@ void fill_grid(int *pRows, int *pCols, char ** grid, Enemy ** enemies, Player * 
                 grid[i][j] = 'M';
                 enemies[index] = new_enemy(i,j);
                 index++;
-                used = TRUE;
+                used = true;
             }
-            else{used = FALSE;}
+            else{used = false;}
         }
     }
     
@@ -344,7 +394,7 @@ void handle_player_movement(Player * player, int *pRows, int *pCols, char ** gri
     int temp = player->y;
     grid[player->x][temp] = ' ';
     if(player->moved_LEFT){
-        player->moved_LEFT = FALSE;
+        player->moved_LEFT = false;
         player->y--;
         if(player->y<1){
             player->y = 1;
@@ -352,7 +402,7 @@ void handle_player_movement(Player * player, int *pRows, int *pCols, char ** gri
         }
     }
     else if(player->moved_RIGHT){
-        player->moved_RIGHT = FALSE;
+        player->moved_RIGHT = false;
         player->y++;
         if(player->y > *pCols - 2){
             player->y = *pCols - 2;
@@ -364,28 +414,44 @@ void handle_player_movement(Player * player, int *pRows, int *pCols, char ** gri
 
 int check_game_state(int * pRows){
     if(g_max == *pRows - 3){
-        return TRUE;
+        return true;
     }
     if(g_score == NUM_ENEMIES) {
-        g_win_flag = TRUE;
+        g_win_flag = true;
         return g_win_flag;
     }
-    return FALSE;
+    return false;
 }
 
-int check_bullet_collision(char ** grid, int * pRows, int * pCols, Enemy * enemies[]){
+int check_player_bullet_collision(char ** grid, int * pRows, int * pCols, Enemy * enemies[]){
     for(int i = 0; i < NUM_ENEMIES; i++){
         if(grid[enemies[i]->x + 1][enemies[i]->y] == '^' && enemies[i]->is_alive){
-            enemies[i]->is_alive = FALSE;
+            enemies[i]->is_alive = false;
             grid[enemies[i]->x][enemies[i]->y] = ' ';
             g_score++;
-            return TRUE;
+            return true;
         }
     }
-    return FALSE;
+    return false;
+}
+
+void generate_enemy_bullet(Enemy * enemies[], char **grid, int *pRows, int *pCols, Bullet *bullets[], int *bullet_index, int *bullets_count){
+    if(*bullets_count == 11) return;
+    int random;
+    for(int i = NUM_ENEMIES - 1; i >= 0; i--){
+        random = rand();
+        if(enemies[i]->is_alive && (rand()%200 == 0) && g_max - enemies[i]->x <= 1 && grid[enemies[i]->x+1][enemies[i]->y] == ' '){
+            grid[enemies[i]->x+1][enemies[i]->y] = '*';
+            bullets[*bullet_index] = new_bullet(&enemies[i]->x,&enemies[i]->y);
+            *bullet_index = (*bullet_index + 1)%11;
+            *bullets_count++;
+            break;
+        }
+    }
 }
 
 int main(){
+    srand(time(NULL));
     set_conio_mode(0);
     int rows, cols;
     rows = 16; 
@@ -405,7 +471,7 @@ int main(){
     // welcome();
 
     // Initializing mutex
-    if (pthread_mutex_init(&lock, NULL) != 0) {
+    if (pthread_mutex_init(&grid_lock, NULL) != 0) {
         fprintf(stderr, "Error initializing mutex\n");
         return 1;
     }
@@ -425,10 +491,30 @@ int main(){
         printf("Keyreader thread successfully created.");
     }
 
+
+    Bullet *player_bullet = NULL;
+    Bullet *bullets[11];
+    int bullet_index = 0;
+    int bullets_count = 0;
+    for(int i = 0; i<11;i++){
+        bullets[i] = NULL;
+    }
+
+    
+    pthread_t enemy_bullet_thread;
+    EnemyBulletThreadParams *ebtp = new_enemy_bullet_thread_params(grid, bullets, &rows, &bullets_count);
+    if(pthread_create(&enemy_bullet_thread, NULL, enemy_bullet_thread_function, (void*)ebtp)){
+        fprintf(stderr, "Error creating Enemy Bullet Movement thread\n");
+        return 1;
+    }
+    else{
+        printf("Enemy Bullet Movement thread successfully created.");
+    }
+
     // Creating Enemy movement Thread
     int terminate = 0; // initializing flag
-    pthread_t enemy_movement_thread;
     AllEnemiesMovementParams *aemp = new_Enemy_Movement_Params(enemies, &rows, &cols, grid, &direction, &terminate);
+    pthread_t enemy_movement_thread;
     if (pthread_create(&enemy_movement_thread, NULL, enemies_movement_thread, (void *)aemp)) {
         fprintf(stderr, "Error creating Enemy Movement thread\n");
         return 1;
@@ -437,37 +523,40 @@ int main(){
         printf("Enemy movement thread successfully created.");
     }
 
-    Bullet * player_bullet = NULL;
 
     // Main Loop
     while (!g_is_over){
         system("clear");
         // terminate = 0;
-        // draw gridh
-        pthread_mutex_lock(&lock);
+        // draw grid
+        pthread_mutex_lock(&grid_lock);
         draw_screen(&rows,&cols,grid);
-        pthread_mutex_unlock(&lock);
+        pthread_mutex_unlock(&grid_lock);
 
         // handling player movement
-        pthread_mutex_lock(&lock);
+        pthread_mutex_lock(&grid_lock);
         handle_player_movement(player, &rows, &cols, grid);
-        pthread_mutex_unlock(&lock);
+        pthread_mutex_unlock(&grid_lock);
         
         if(player->can_shoot && player_bullet == NULL){
-            pthread_mutex_lock(&lock);
+            pthread_mutex_lock(&grid_lock);
             player_bullet = new_bullet(&player->x,&player->y);
             grid[player_bullet->x][player_bullet->y] = '^';
-            player->can_shoot = FALSE;
-            pthread_mutex_unlock(&lock);
+            player->can_shoot = false;
+            pthread_mutex_unlock(&grid_lock);
         }
 
-        pthread_mutex_lock(&lock);
-        if(check_bullet_collision(grid, &rows, &cols, enemies)){
+        pthread_mutex_lock(&grid_lock);
+        generate_enemy_bullet(enemies, grid, &rows, &cols, bullets, &bullet_index, &bullets_count);
+        pthread_mutex_unlock(&grid_lock);
+
+        pthread_mutex_lock(&grid_lock);
+        if(check_player_bullet_collision(grid, &rows, &cols, enemies)){
             grid[player_bullet->x][player_bullet->y] = ' ';
             free(player_bullet);
             player_bullet = NULL;
         }
-        pthread_mutex_unlock(&lock);
+        pthread_mutex_unlock(&grid_lock);
 
         if(player_bullet != NULL && player_bullet->x != 0){
             grid[player_bullet->x][player_bullet->y] = ' ';
@@ -480,17 +569,26 @@ int main(){
             free(player_bullet);
             player_bullet = NULL;
         }
+        if(grid[player->x-1][player->y] == '*' /*|| grid[player->x][player->y] == '*'*/){
+            grid[player->x-1][player->y] = ' ';
+            g_lives--;
+        }
+        if(grid[player->x][player->y] == '*'){
+            // grid[player->x-1][player->y] = ' ';
+            g_lives--;
+        }
         
         g_is_over = check_game_state(&rows);
         if(g_is_over) break;
-        usleep(30000);
+        usleep(22000);
     }
 
     terminate = 1;
     // pthread_join(input_handler, NULL);
     pthread_join(enemy_movement_thread, NULL);
+    // pthread_cancel(enemy_bullet_thread);
     pthread_cancel(player_movement_thread);   // the input handler thread can be safely cancelled
-    pthread_mutex_destroy(&lock);
+    pthread_mutex_destroy(&grid_lock);
     set_conio_mode(1);
     free(player_bullet);
     free(player);
