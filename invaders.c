@@ -13,6 +13,7 @@ int g_max;
 int g_is_over = FALSE;
 int g_score = 0;
 int g_lives = 5;
+int g_win_flag = FALSE;
 
 
 // ==> BEGIN TERMINAL SECTION <==
@@ -65,7 +66,7 @@ void clear_screen(){
 }
 
 void welcome(){
-    printf("\t \t \t \tWELCOME SOLDIER \n \n");
+    printf("\t \t \t \tWELCOME SOLDIER! \n \n");
     sleep(2);
     printf("\t THE COMMAND PROMPT INVADERS ARE BACK AND EVERYONE NEEDS A HERO \n \n ");
     sleep(2);
@@ -82,8 +83,8 @@ void welcome(){
 
 // ==> BEGIN PLAYER SECTION <== //
 typedef struct{
-    int y;
     int x;
+    int y;
     int can_shoot;
     int proyectile_is_alive;
     int is_alive;
@@ -101,6 +102,18 @@ Player *new_player(int *rows, int *cols){
     player->moved_LEFT = FALSE;
     player->moved_RIGHT = FALSE;
     return player;
+}
+
+typedef struct{
+    int x;
+    int y;
+}Bullet;
+
+Bullet * new_bullet(int *pPlayerx, int *pPlayery){
+    Bullet *player_bullet = (Bullet*)malloc(sizeof(Bullet));
+    player_bullet->x = *pPlayerx - 1;
+    player_bullet->y = *pPlayery;
+    return player_bullet;
 }
 
 void *read_input(void *params){
@@ -128,15 +141,13 @@ void *read_input(void *params){
                 break;
             // quit
             case 'q': 
-                set_conio_mode(1);
-                exit(0);
+                g_is_over = TRUE;          
                 break;
             default:
                 break;
             }
         }
     }
-    usleep(100000);
     return NULL;
 }
 // ==> END PLAYER SECTION <== //
@@ -192,19 +203,18 @@ enum Collision{
 };
 
 void handle_enemy_movement(Enemy *enemy, int *pRows, int *pCols, char ** grid, int *direction, enum Collision * collision) {
-    g_max = enemy->is_alive && g_max < enemy->x ? enemy->x : g_max;
+    // enemy->is_alive = FALSE;
+    if(!enemy->is_alive) return;    
+    g_max = g_max < enemy->x ? enemy->x : g_max;
     grid[enemy->x][enemy->y] = ' ';
     
-    if(!enemy->is_alive) return;    
-
     // Check for boundary conditions
     if (enemy->y == 1 || enemy->y == *pCols -2 && enemy->is_alive){
         *collision = enemy->y == 1 ? LEFT_COLLISION : RIGHT_COLLISION;
         return;
     }
-    
+
     enemy->y = *direction == LEFT ? enemy->y - 1 : enemy->y + 1;
-    
     // Place the enemy in the new position
     grid[enemy->x][enemy->y] = enemy->is_alive ? 'M' : ' ';   
 }
@@ -225,6 +235,7 @@ void handle_enemy_collision(Enemy * enemies[],int num_enemies, int *pRows, int *
 
 void handle_enemies_movement(Enemy * enemies[], int num_enemies, int *pRows, int *pCols, char **grid, int * direction) {
     enum Collision collision = NO_COLLISION;
+
     pthread_mutex_lock(&lock);
     if(*direction == RIGHT){
         // loop backwards
@@ -254,10 +265,11 @@ void handle_enemies_movement(Enemy * enemies[], int num_enemies, int *pRows, int
 void * enemies_movement_thread(void *params){
     AllEnemiesMovementParams *aemp = (AllEnemiesMovementParams*)params;
     while(!(*(aemp->terminate))){
+        
         handle_enemies_movement(aemp->enemies, aemp->num_enemies, aemp->pRows, aemp->pCols, aemp->grid, aemp->direction);
         // usleep(100000);
         // usleep(1050000);
-        usleep(1050000);
+        usleep(700000);
     }
     return NULL;
 }
@@ -354,6 +366,22 @@ int check_game_state(int * pRows){
     if(g_max == *pRows - 3){
         return TRUE;
     }
+    if(g_score == NUM_ENEMIES) {
+        g_win_flag = TRUE;
+        return g_win_flag;
+    }
+    return FALSE;
+}
+
+int check_bullet_collision(char ** grid, int * pRows, int * pCols, Enemy * enemies[]){
+    for(int i = 0; i < NUM_ENEMIES; i++){
+        if(grid[enemies[i]->x + 1][enemies[i]->y] == '^' && enemies[i]->is_alive){
+            enemies[i]->is_alive = FALSE;
+            grid[enemies[i]->x][enemies[i]->y] = ' ';
+            g_score++;
+            return TRUE;
+        }
+    }
     return FALSE;
 }
 
@@ -362,9 +390,9 @@ int main(){
     int rows, cols;
     rows = 16; 
     cols = 53;
-    int direction = RIGHT;
-    // get_terminal_size(&rows, &cols);
-    printf("%d x %d", rows, cols);
+    int direction = rand() % 2;
+    // get_terminal_size(&rows, &cols);qq
+    // printf("%d x %d", rows, cols);
 
     Enemy * enemies[NUM_ENEMIES];
     Player *player = new_player(&rows, &cols);
@@ -375,11 +403,6 @@ int main(){
     // starts here
     // system("clear");
     // welcome();
-
-    // // Proyectile initialization
-    int alx = player->x;
-    int aly = player->y + 1;
-    int oldx, oldy;
 
     // Initializing mutex
     if (pthread_mutex_init(&lock, NULL) != 0) {
@@ -407,18 +430,20 @@ int main(){
     pthread_t enemy_movement_thread;
     AllEnemiesMovementParams *aemp = new_Enemy_Movement_Params(enemies, &rows, &cols, grid, &direction, &terminate);
     if (pthread_create(&enemy_movement_thread, NULL, enemies_movement_thread, (void *)aemp)) {
-        fprintf(stderr, "Error creating thread\n");
+        fprintf(stderr, "Error creating Enemy Movement thread\n");
         return 1;
     }
     else{
         printf("Enemy movement thread successfully created.");
     }
 
+    Bullet * player_bullet = NULL;
+
     // Main Loop
     while (!g_is_over){
         system("clear");
-
-        // draw grid
+        // terminate = 0;
+        // draw gridh
         pthread_mutex_lock(&lock);
         draw_screen(&rows,&cols,grid);
         pthread_mutex_unlock(&lock);
@@ -428,61 +453,46 @@ int main(){
         handle_player_movement(player, &rows, &cols, grid);
         pthread_mutex_unlock(&lock);
         
-
-        if (player->can_shoot && !player->proyectile_is_alive)
-        {
-            alx = player->x - 1;
-            aly = player->y;
-            // printf("%d %d",alx,aly);
-            grid[alx][aly] = '^';
-            // printf("TRUE");
-            player->can_shoot = FALSE;
-            player->proyectile_is_alive = TRUE;
-        }
-
-        if (player->proyectile_is_alive && grid[alx - 1][aly] == 'M')
-        {
+        if(player->can_shoot && player_bullet == NULL){
             pthread_mutex_lock(&lock);
-            grid[alx][aly] = ' ';
-            grid[alx - 1][aly] = ' ';
-            player->proyectile_is_alive = FALSE;
-            // enemy->is_alive=FALSE;
-            alx = player->x;
-            aly = player->y;
-            g_score++;
-            // enemies--;
+            player_bullet = new_bullet(&player->x,&player->y);
+            grid[player_bullet->x][player_bullet->y] = '^';
+            player->can_shoot = FALSE;
             pthread_mutex_unlock(&lock);
         }
 
-        if (alx == 1)
-        {
-            grid[alx][aly] = ' ';
-            grid[alx - 1][aly] = ' ';
-            player->proyectile_is_alive = FALSE;
-            alx = player->x;
-            aly = player->y;
+        pthread_mutex_lock(&lock);
+        if(check_bullet_collision(grid, &rows, &cols, enemies)){
+            grid[player_bullet->x][player_bullet->y] = ' ';
+            free(player_bullet);
+            player_bullet = NULL;
+        }
+        pthread_mutex_unlock(&lock);
+
+        if(player_bullet != NULL && player_bullet->x != 0){
+            grid[player_bullet->x][player_bullet->y] = ' ';
+            player_bullet->x--;
+            grid[player_bullet->x][player_bullet->y] = '^';
         }
 
-        if (player->proyectile_is_alive)
-        {
-            oldx = alx;
-            grid[oldx][aly] = ' ';
-            alx--;
-            grid[alx][aly] = '^';
+        if(player_bullet != NULL && player_bullet->x == 0){
+            grid[player_bullet->x][player_bullet->y] = ' ';
+            free(player_bullet);
+            player_bullet = NULL;
         }
+        
         g_is_over = check_game_state(&rows);
-        if(g_is_over) {
-            break;
-        }
-        usleep(7000);
+        if(g_is_over) break;
+        usleep(30000);
     }
 
-    // terminate = 1;
+    terminate = 1;
     // pthread_join(input_handler, NULL);
-    // pthread_join(enemy_movement_thread, NULL);
+    pthread_join(enemy_movement_thread, NULL);
     pthread_cancel(player_movement_thread);   // the input handler thread can be safely cancelled
     pthread_mutex_destroy(&lock);
     set_conio_mode(1);
+    free(player_bullet);
     free(player);
     free_enemies(enemies);
     free_grid(grid, &rows, &cols);
