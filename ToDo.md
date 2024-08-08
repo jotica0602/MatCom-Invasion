@@ -6,9 +6,10 @@
   - [x]   Fix left and right bounds conditions.
 - [x]  Enemy destruction.
   - [ ]  Little animation ('X') with perfect timing (optional).
-- [ ]   Multi-enemy laser shots.
+- [x]   Multi-enemy laser shots.
 - [ ]   Game Over functionality:
   - [x]   When the enemy reaches the player.
   - [ ]   When player has no more lives left.   
+- [ ]   Shields.
 - [x]   Display Score.
 - [x]   Display Lives.   
