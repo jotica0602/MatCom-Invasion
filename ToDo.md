@@ -4,7 +4,8 @@
 - [x]   Multi-enemy movement:
   - [x]   Add mutexes to avoid race between screen drawing and enemy movement.
   - [x]   Fix left and right bounds conditions.
-- [ ]  Enemy destruction.
+- [x]  Enemy destruction.
+  - [ ]  Little animation ('X') with perfect timing (optional).
 - [ ]   Multi-enemy laser shots.
 - [ ]   Game Over functionality:
   - [x]   When the enemy reaches the player.
