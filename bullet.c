@@ -28,11 +28,8 @@ void generate_enemy_bullet(Enemy * enemies[], char **grid, int *pRows, int *pCol
         return;} // only 11 bullets are allowed
     int random;                     // declaring random number
     for(int i = NUM_ENEMIES - 1; i >= 0; i--){
-        if(enemies[i]->is_alive && (rand()%702 == 0)){ // only alive enemies can shoot
-            grid[enemies[i]->x+1][enemies[i]->y] = '*';
-            // while(bullets[*bullet_index] != NULL && *bullets_count < 11) {
-            //     printf("loopinnnng");
-            //     *bullet_index = (*bullet_index + 1)%11;}
+        if(enemies[i]->is_alive && (rand()%701 == 0)){ // only alive enemies can shoot
+            grid[enemies[i]->x+1][enemies[i]->y] = grid[enemies[i]->x+1][enemies[i]->y] == 'M' ? 'M' : '*';
             bullets[*bullet_index] = new_enemy_bullet(&enemies[i]->x,&enemies[i]->y);
             *bullet_index = (*bullet_index + 1)%11;
             *bullets_count++;
@@ -52,7 +49,7 @@ void move_enemy_bullets(char **grid, Bullet *bullets[], int *pRows, int *bullets
                 *bullets_count--;
                 continue;
             }else{
-                grid[bullets[i]->x][bullets[i]->y] = ' ';
+                grid[bullets[i]->x][bullets[i]->y] = grid[bullets[i]->x][bullets[i]->y] == 'M' ? 'M' : ' ';
                 bullets[i]->x++;
                 grid[bullets[i]->x][bullets[i]->y] = '*';
 
@@ -87,7 +84,7 @@ int check_player_bullet_collision(char ** grid, int * pRows, int * pCols, Enemy 
     for(int i = 0; i < NUM_ENEMIES; i++){
         if(grid[enemies[i]->x + 1][enemies[i]->y] == '^' && enemies[i]->is_alive){
             enemies[i]->is_alive = false;
-            grid[enemies[i]->x][enemies[i]->y] = ' ';
+            grid[enemies[i]->x][enemies[i]->y] = 'X';
             g_score++;
             pthread_mutex_unlock(&grid_lock);
             return true;

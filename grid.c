@@ -18,7 +18,7 @@ void free_grid(char ** grid, int *pRows, int *pCols){
 
 void fill_grid(int *pRows, int *pCols, char ** grid, Enemy ** enemies, Player * player){
     int index = 0;
-    int lbx = ceil((6 * *pRows)/100);        // lower bound for x (6%)
+    int lbx = ceil((20 * *pRows)/100);        // lower bound for x (6%)
     int ubx = lbx + 5;                      // upper bound for x
     int lby = ceil((32 * *pCols)/100);       // lower bound for y (32%)
     int uby = lby + 22;                       // upper bound for y

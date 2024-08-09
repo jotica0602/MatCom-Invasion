@@ -50,4 +50,6 @@ void handle_enemy_collision(Enemy * enemies[],int num_enemies, int *pRows, int *
 // Enemies movement handler thread.
 void *enemies_movement_thread(void *params);
 
+
+
 #endif

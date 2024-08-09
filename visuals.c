@@ -1,4 +1,5 @@
 #include "visuals.h"
+#include <unistd.h>
 
 void welcome(){
     printf("\t \t \t \tWELCOME SOLDIER! \n \n");
@@ -115,3 +116,32 @@ void print_ascii_art() {
 //                                                                                      $$ |                                                  
 //                                                                                      $$ |                                                  
 //                                                                                      \__|                                                  
+
+void clean_enemy_explosions(char **grid, int *pRows, int *pCols){
+    for(int i = 1; i < *pRows - 4;i++){
+        for(int j = 1; j < *pCols - 1; j++){
+            if(grid[i][j] == 'X'){
+                grid[i][j] = ' ';
+            }
+        }
+    }
+}
+
+EnemyExplosionParams *new_enemy_explosion_params(char **grid, int *pRows, int *pCols){
+    EnemyExplosionParams *eep = (EnemyExplosionParams*)malloc(sizeof(EnemyExplosionParams));
+    eep->grid = grid;
+    eep->pRows = pRows;
+    eep->pCols = pCols;
+    return eep;
+}
+
+void *enemy_explosions_cleaner_thread(void *params){
+    EnemyExplosionParams *eep = (EnemyExplosionParams*)params;
+    while(true){
+        pthread_mutex_lock(&grid_lock);
+        clean_enemy_explosions(eep->grid, eep->pRows, eep->pCols);
+        pthread_mutex_unlock(&grid_lock);
+        usleep(250000);
+    }
+    return NULL;
+}

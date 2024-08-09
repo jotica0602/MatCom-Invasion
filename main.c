@@ -24,7 +24,7 @@ int check_game_state(int * pRows){
     return false;
 }
 
-int initialize_threads(thread *enemy_movement_thread, thread *player_movement_thread, thread *enemy_bullet_thread, EnemiesMovementParams *emp, EnemyBulletThreadParams *ebp, Player *player){
+int initialize_threads(thread *enemy_movement_thread, thread *player_movement_thread, thread *enemy_bullet_thread, thread *enemy_explosion_cleaner_thread, EnemiesMovementParams *emp, EnemyBulletThreadParams *ebp, EnemyExplosionParams *eep, Player *player){
 
     if (pthread_mutex_init(&grid_lock, NULL) != 0) {
         fprintf(stderr, "Error initializing mutex.\n");
@@ -49,6 +49,12 @@ int initialize_threads(thread *enemy_movement_thread, thread *player_movement_th
     }
     else{printf("Enemy Bullet Movement thread successfully created.\n");}
 
+    if(pthread_create(enemy_explosion_cleaner_thread, NULL, enemy_explosions_cleaner_thread, (void*)eep)){
+        fprintf(stderr, "Error creating Enemy Explosion Cleaner thread\n");
+        return 1;
+    }
+    else{printf("Enemy Explosion Cleaner thread successfully created.\n");}
+
     return 1;
 }
 
@@ -61,6 +67,7 @@ void launch(){
     thread enemy_movement_thread;
     thread player_movement_thread;
     thread enemy_bullet_thread;
+    thread enemy_explosion_cleaner_thread;
 
     // Enabling Terminal Canonical Mode
     set_conio_mode(0);
@@ -93,7 +100,9 @@ void launch(){
 
     int bullet_index = 0;       // this variable will be used to generate enemy bullets
 
-    initialize_threads(&enemy_movement_thread, &player_movement_thread, &enemy_bullet_thread, emp, ebp, player);
+    // Initializing enemy explosion cleaner params
+    EnemyExplosionParams *eep = new_enemy_explosion_params(grid, &rows, &cols);
+    initialize_threads(&enemy_movement_thread, &player_movement_thread, &enemy_bullet_thread, &enemy_explosion_cleaner_thread, emp, ebp, eep, player);
     // Main Loop
     while (!g_is_over){
         // draw grid

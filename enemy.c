@@ -87,8 +87,7 @@ void *enemies_movement_thread(void *params){
         pthread_mutex_lock(&grid_lock);
         handle_enemies_movement(aemp->enemies, aemp->num_enemies, aemp->pRows, aemp->pCols, aemp->grid, aemp->direction);
         pthread_mutex_unlock(&grid_lock);
-        usleep(1000000);
+        usleep(700000);
     }
     return NULL;
 }
-

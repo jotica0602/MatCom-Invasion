@@ -4,6 +4,14 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "globals.h"
+#include <stdbool.h>
+
+
+typedef struct EnemyExplosionParams{
+char **grid;
+int *pRows;
+int *pCols;
+}EnemyExplosionParams;
 
 // Display welcome screen.
 void welcome();
@@ -14,12 +22,8 @@ void my_print();
 void my_print2();
 void print_ascii_art();
 
-//  /$$      /$$             /$$      /$$$$$$                                /$$$$$$                                         /$$                    
-// | $$$    /$$$            | $$     /$$__  $$                              |_  $$_/                                        |__/                    
-// | $$$$  /$$$$  /$$$$$$  /$$$$$$  | $$  \__/  /$$$$$$  /$$$$$$/$$$$         | $$   /$$$$$$$  /$$    /$$ /$$$$$$   /$$$$$$$ /$$  /$$$$$$  /$$$$$$$ 
-// | $$ $$/$$ $$ |____  $$|_  $$_/  | $$       /$$__  $$| $$_  $$_  $$        | $$  | $$__  $$|  $$  /$$/|____  $$ /$$_____/| $$ /$$__  $$| $$__  $$
-// | $$  $$$| $$  /$$$$$$$  | $$    | $$      | $$  \ $$| $$ \ $$ \ $$        | $$  | $$  \ $$ \  $$/$$/  /$$$$$$$|  $$$$$$ | $$| $$  \ $$| $$  \ $$
-// | $$\  $ | $$ /$$__  $$  | $$ /$$| $$    $$| $$  | $$| $$ | $$ | $$        | $$  | $$  | $$  \  $$$/  /$$__  $$ \____  $$| $$| $$  | $$| $$  | $$
-// | $$ \/  | $$|  $$$$$$$  |  $$$$/|  $$$$$$/|  $$$$$$/| $$ | $$ | $$       /$$$$$$| $$  | $$   \  $/  |  $$$$$$$ /$$$$$$$/| $$|  $$$$$$/| $$  | $$
-// |__/     |__/ \_______/   \___/   \______/  \______/ |__/ |__/ |__/      |______/|__/  |__/    \_/    \_______/|_______/ |__/ \______/ |__/  |__/
+EnemyExplosionParams *new_enemy_explosion_params(char **grid, int *pRows, int *pCols);
+void clean_enemy_explosions(char **grid, int *pRows, int *pCols);
+void *enemy_explosions_cleaner_thread(void *params);
+
 #endif

@@ -5,7 +5,7 @@
 #include <pthread.h>
 #define LEFT 0
 #define RIGHT 1
-#define NUM_ENEMIES 1
+#define NUM_ENEMIES 55
 
 typedef pthread_mutex_t mutex_thread;
 typedef pthread_t thread;
