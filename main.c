@@ -58,7 +58,21 @@ int initialize_threads(thread *enemy_movement_thread, thread *player_input_threa
     return 1;
 }
 
-void launch(){
+int ask_user(){
+    int option;
+    printf("\n1 - Keep playing.\n");
+    printf("2 - Quit.\n");
+    scanf("%d", &option);
+    while(option != 1 && option != 2){
+        printf("Invalid input.");
+        scanf("%d", &option);
+
+    }
+    if(option == 1){return 1;}
+    else {return 0;}
+}
+
+int launch(){
     // initializing random number generator. time(NULL) is the seed.
     // time(NULL) returns the current time
     srand(time(NULL));  
@@ -74,7 +88,7 @@ void launch(){
     
     // Declaring grid size
     int rows, cols;
-    rows = 16;                              //rows
+    rows = 23;                              //rows
     cols = 80;                              //columns
     int direction = rand() % 2;             //stablishing a random direction for enemy movement
     // get_terminal_size(&rows, &cols);
@@ -87,7 +101,6 @@ void launch(){
     fill_grid(&rows, &cols, grid, enemies, player); // placing enemies and player
 
     // Everything starts here
-    welcome();
 
     int terminate = 0; // <== termination flag for threads
     // Initializing Enemy movement thread params
@@ -142,8 +155,6 @@ void launch(){
         usleep(21000);
     }
     
-    if(g_win_flag) print_level_completed();
-    else print_game_over(0);
     // Finishing threads and freeing memory
     terminate = 1;
     pthread_join(enemy_movement_thread, NULL);
@@ -160,11 +171,25 @@ void launch(){
     free(ebp);
     free(eep);
     free_grid(grid, &rows, &cols);
-    printf("end\n"); 
+
+    if(g_win_flag){
+        print_level_completed();
+        usleep(2000000);
+        reset_globals();
+        g_current_level++;
+        return ask_user();
+        
+    }
+
+    else {print_game_over(0);
+        return 0;
+    }
+    // printf("end\n"); 
 }
 
 int main(){
     system("clear");
-    launch();
+    welcome();
+    while(launch());
     return 0;
 }

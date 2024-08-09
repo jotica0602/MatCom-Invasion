@@ -25,7 +25,7 @@ void draw_screen(int *pRows, int *pCols, char ** grid){
         }
         printf("\n");
     }
-    printf(" Score:%-d-------------------------------------------------------------------------------------------------------------------------------------------------Lives:%d\t\t\t\n" , g_score, g_lives);
+    printf(" Score:%-d--------------------------------------------------------------Level:%d----------------------------------------------------------------------------Lives:%d\t\t\t\n" , g_score, g_current_level, g_lives);
     pthread_mutex_unlock(&grid_lock);
 }
 

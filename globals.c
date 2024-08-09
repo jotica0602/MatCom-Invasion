@@ -8,3 +8,16 @@ int g_is_over = false;
 int g_score = 0;
 int g_lives = 5;
 int g_win_flag = false;
+int g_current_level = 1;
+
+void reset_globals(){
+    g_max = __INT32_MAX__;
+    g_is_over = false;
+    g_score = 0;
+    g_lives = 5;
+    g_win_flag = false;
+}
+
+void level_up(){
+    g_current_level++;
+}
