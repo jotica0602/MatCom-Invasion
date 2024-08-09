@@ -5,11 +5,11 @@
   - [x]   Add mutexes to avoid race between screen drawing and enemy movement.
   - [x]   Fix left and right bounds conditions.
 - [x]  Enemy destruction.
-  - [ ]  Little animation ('X') with perfect timing (optional).
+  - [x]  Little animation ('X') with perfect timing (optional).
 - [x]   Multi-enemy laser shots.
-- [ ]   Game Over functionality:
+- [x]   Game Over functionality:
   - [x]   When the enemy reaches the player.
-  - [ ]   When player has no more lives left.   
+  - [x]   When player has no more lives left.   
 - [ ]   Shields.
 - [x]   Display Score.
 - [x]   Display Lives.   
