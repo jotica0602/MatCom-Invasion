@@ -1,10 +1,10 @@
 #ifndef PLAYER_H
 #define PLAYER_H
-#include "bullet.h"
 #include "globals.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include <stdbool.h>
+#include <pthread.h>
 
 
 typedef struct Player{

@@ -48,23 +48,23 @@ void *read_input(void *params){
 }
 
 void handle_player_movement(Player * player, int *pRows, int *pCols, char ** grid){
+    pthread_mutex_lock(&grid_lock);
     int temp = player->y;
     grid[player->x][temp] = ' ';
     if(player->moved_LEFT){
         player->moved_LEFT = false;
         player->y--;
-        if(player->y<1){
+        if(player->y<1){                // player in left bound
             player->y = 1;
-            return;
         }
     }
     else if(player->moved_RIGHT){
         player->moved_RIGHT = false;
         player->y++;
-        if(player->y > *pCols - 2){
+        if(player->y > *pCols - 2){     // player in right bound
             player->y = *pCols - 2;
-            return;
         }
     }
     grid[player->x][player->y] = 'A';
+    pthread_mutex_unlock(&grid_lock);
 }

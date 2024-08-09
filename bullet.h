@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "enemy.h"
+#include "globals.h"
+#include "player.h"
 
 typedef struct Bullet{
     int x;
@@ -41,5 +43,8 @@ void *enemy_bullet_thread_function(void *params);
 int check_player_bullet_collision(char ** grid, int * pRows, int * pCols, Enemy * enemies[]);
 
 // Player bullet movement handler
-void move_player_bullet(Bullet *player_bullet, char **grid);
+void move_player_bullet(Bullet **player_bullet, char **grid, Player *player);
+
+// Checks for enemy bullets collision. If there was any, player will lose 1 live.
+int check_enemy_bullet_collision(char **grid, Player *player);
 #endif

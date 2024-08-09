@@ -31,6 +31,9 @@ void fill_grid(int *pRows, int *pCols, char ** grid, Enemy ** enemies, Player * 
                 grid[i][j] = '|';
                 // printf("%2c", grid[i][j]);
             }
+            else if(i == 0 && j >= 1 && j < *pCols - 1){
+                grid[i][j] = '-';
+            }
             else{
                 grid[i][j] = ' ';
                 // printf("%2c",grid[i][j]);
