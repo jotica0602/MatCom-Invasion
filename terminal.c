@@ -9,8 +9,8 @@ void get_terminal_size(int *rows, int *cols)
         perror("ioctl");
         return;
     }
-    *rows = w.ws_row;
-    *cols = w.ws_col / 4;
+    *rows = w.ws_row/3;
+    *cols = w.ws_col/3;
 }
 
 

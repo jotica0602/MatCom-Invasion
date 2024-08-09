@@ -83,11 +83,11 @@ void handle_enemy_collision(Enemy * enemies[],int num_enemies, int *pRows, int *
 
 void *enemies_movement_thread(void *params){
     EnemiesMovementParams *aemp = (EnemiesMovementParams*)params;
-    while(!(*(aemp->terminate))){
+    while(!(*aemp->terminate)){
         pthread_mutex_lock(&grid_lock);
         handle_enemies_movement(aemp->enemies, aemp->num_enemies, aemp->pRows, aemp->pCols, aemp->grid, aemp->direction);
         pthread_mutex_unlock(&grid_lock);
-        usleep(700000);
+        usleep(500000);
     }
     return NULL;
 }

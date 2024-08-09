@@ -16,6 +16,7 @@ typedef struct EnemyBulletThreadParams{
     Bullet ** bullets;
     int *pRows;
     int *bullets_count;
+    int *terminate;
 }EnemyBulletThreadParams;
 
 // Player bullet constructor.
@@ -34,7 +35,7 @@ void generate_enemy_bullet(Enemy * enemies[], char **grid, int *pRows, int *pCol
 void move_enemy_bullets(char **grid, Bullet *bullets[], int *pRows, int *bullets_count);
 
 // Enemy bullet thread parameters.
-EnemyBulletThreadParams *new_enemy_bullet_thread_params(char **grid, Bullet *bullets[], int *pRows, int *bullets_count);
+EnemyBulletThreadParams *new_enemy_bullet_thread_params(char **grid, Bullet *bullets[], int *pRows, int *bullets_count, int *terminate);
 
 // Enemy bullet movement thread.
 void *enemy_bullet_thread_function(void *params);

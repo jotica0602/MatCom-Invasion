@@ -11,6 +11,7 @@ typedef struct EnemyExplosionParams{
 char **grid;
 int *pRows;
 int *pCols;
+int *terminate;
 }EnemyExplosionParams;
 
 // Display welcome screen.
@@ -18,11 +19,11 @@ void welcome();
 // Draw screen.
 void draw_screen(int *pRows, int *pCols, char ** grid);
 
-void my_print();
-void my_print2();
-void print_ascii_art();
+void print_game_title();
+void print_game_over();
+void print_level_completed();
 
-EnemyExplosionParams *new_enemy_explosion_params(char **grid, int *pRows, int *pCols);
+EnemyExplosionParams *new_enemy_explosion_params(char **grid, int *pRows, int *pCols, int *terminate);
 void clean_enemy_explosions(char **grid, int *pRows, int *pCols);
 void *enemy_explosions_cleaner_thread(void *params);
 

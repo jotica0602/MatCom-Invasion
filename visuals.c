@@ -2,21 +2,21 @@
 #include <unistd.h>
 
 void welcome(){
-    printf("\t \t \t \tWELCOME SOLDIER! \n \n");
+    printf("\n\t\t\t\t\t\t\t\tWELCOME SOLDIER! \n \n");
     sleep(2);
-    printf("\t THE COMMAND PROMPT INVADERS ARE BACK AND EVERYONE NEEDS A HERO \n \n ");
+    printf("\t\t\t\t\tTHE COMMAND PROMPT INVADERS ARE BACK AND EVERYONE NEEDS A HERO \n \n ");
     sleep(2);
-    printf("\t \t DEFEND YOUR OPERATING SYSTEM NO MATTER WHAT\n \n");
+    printf("\t\t\t\t\t\t  DEFEND YOUR OPERATING SYSTEM NO MATTER WHAT\n \n");
     sleep(2);
-    printf("\t \t \t \tGOOD LUCK!!!");
+    printf("\t\t\t\t\t\t\t\tGOOD LUCK!!!");
     sleep(2);
-    printf("\n\n\t\t\t  PRESS ANY KEY TO START");
+    printf("\n\n\t\t\t\t\t\t\t   PRESS ANY KEY TO START");
     getchar();
 }
 
 void draw_screen(int *pRows, int *pCols, char ** grid){
     system("clear");
-    my_print();
+    print_game_title();
     pthread_mutex_lock(&grid_lock);
     for (int i = 0; i < *pRows; i++){
         for (int j = 0; j < *pCols; j++){
@@ -29,7 +29,7 @@ void draw_screen(int *pRows, int *pCols, char ** grid){
     pthread_mutex_unlock(&grid_lock);
 }
 
-void my_print(){
+void print_game_title(){
     const char *r1 = "\t$$\\      $$\\            $$\\      $$$$$$\\                                $$$$$$\\                                        $$\\                     \n";
     const char *r2 = "\t$$$\\    $$$ |           $$ |    $$  __$$\\                               \\_$$  _|                                       \\__|                    \n";
     const char *r3 = "\t$$$$\\  $$$$ | $$$$$$\\ $$$$$$\\   $$ /  \\__| $$$$$$\\  $$$$$$\\$$$$\\          $$ |  $$$$$$$\\ $$\\    $$\\ $$$$$$\\   $$$$$$$\\ $$\\  $$$$$$\\  $$$$$$$\\  \n";
@@ -60,7 +60,7 @@ void my_print(){
 // $$ | \_/ $$ |\$$$$$$$ | \$$$$  |\$$$$$$  |\$$$$$$  |$$ | $$ | $$ |      $$$$$$\ $$ |  $$ |  \$  /  \$$$$$$$ |$$$$$$$  |$$ |\$$$$$$  |$$ |  $$ |
 // \__|     \__| \_______|  \____/  \______/  \______/ \__| \__| \__|      \______|\__|  \__|   \_/    \_______|\_______/ \__| \______/ \__|  \__|
 
-void my_print2(){
+void print_game_over(){
     const char *r1 = "\t\t\t\t$$$$$$\\                                           $$$$$$\\                                 \n";
     const char *r2 = "\t\t\t\t$$  __$$\\                                         $$  __$$\\                                \n";
     const char *r3 = "\t\t\t\t$$ /  \\__| $$$$$$\\  $$$$$$\\$$$$\\   $$$$$$\\        $$ /  $$ |$$\\    $$\\  $$$$$$\\   $$$$$$\\  \n";
@@ -91,7 +91,7 @@ void my_print2(){
 
 
 
-void print_ascii_art() {
+void print_level_completed() {
     printf("\t\t$$\\                                      $$\\        $$$$$$\\                                    $$\\             $$\\                     $$\\ \n");
     printf("\t\t$$ |                                     $$ |      $$  __$$\\                                   $$ |            $$ |                    $$ |\n");
     printf("\t\t$$ |       $$$$$$\\  $$\\    $$\\  $$$$$$\\  $$ |      $$ /  \\__| $$$$$$\\  $$$$$$\\$$$$\\   $$$$$$\\  $$ | $$$$$$\\  $$$$$$\\    $$$$$$\\   $$$$$$$ |\n");
@@ -127,17 +127,18 @@ void clean_enemy_explosions(char **grid, int *pRows, int *pCols){
     }
 }
 
-EnemyExplosionParams *new_enemy_explosion_params(char **grid, int *pRows, int *pCols){
+EnemyExplosionParams *new_enemy_explosion_params(char **grid, int *pRows, int *pCols, int *terminate){
     EnemyExplosionParams *eep = (EnemyExplosionParams*)malloc(sizeof(EnemyExplosionParams));
     eep->grid = grid;
     eep->pRows = pRows;
     eep->pCols = pCols;
+    eep->terminate = terminate;
     return eep;
 }
 
 void *enemy_explosions_cleaner_thread(void *params){
     EnemyExplosionParams *eep = (EnemyExplosionParams*)params;
-    while(true){
+    while(!(*eep->terminate)){
         pthread_mutex_lock(&grid_lock);
         clean_enemy_explosions(eep->grid, eep->pRows, eep->pCols);
         pthread_mutex_unlock(&grid_lock);

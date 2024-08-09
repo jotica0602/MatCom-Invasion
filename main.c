@@ -24,14 +24,14 @@ int check_game_state(int * pRows){
     return false;
 }
 
-int initialize_threads(thread *enemy_movement_thread, thread *player_movement_thread, thread *enemy_bullet_thread, thread *enemy_explosion_cleaner_thread, EnemiesMovementParams *emp, EnemyBulletThreadParams *ebp, EnemyExplosionParams *eep, Player *player){
+int initialize_threads(thread *enemy_movement_thread, thread *player_input_thread, thread *enemy_bullet_thread, thread *enemy_explosion_cleaner_thread, EnemiesMovementParams *emp, EnemyBulletThreadParams *ebp, EnemyExplosionParams *eep, Player *player){
 
     if (pthread_mutex_init(&grid_lock, NULL) != 0) {
         fprintf(stderr, "Error initializing mutex.\n");
         return 1;
     }else{printf("Mutex thread succesfully created.\n");}
 
-    if(pthread_create(player_movement_thread, NULL, read_input, (void *)player) != 0){
+    if(pthread_create(player_input_thread, NULL, read_input, (void *)player) != 0){
         fprintf(stderr, "Error creating the keyreader thread.\n");
         restore_terminal();
         free(player);
@@ -65,7 +65,7 @@ void launch(){
     
     // Declaring threads
     thread enemy_movement_thread;
-    thread player_movement_thread;
+    thread player_input_thread;
     thread enemy_bullet_thread;
     thread enemy_explosion_cleaner_thread;
 
@@ -74,10 +74,11 @@ void launch(){
     
     // Declaring grid size
     int rows, cols;
-    rows = 25;                              //rows
+    rows = 16;                              //rows
     cols = 80;                              //columns
     int direction = rand() % 2;             //stablishing a random direction for enemy movement
     // get_terminal_size(&rows, &cols);
+    
 
     // initializing enemy array
     Enemy * enemies[NUM_ENEMIES];
@@ -86,23 +87,25 @@ void launch(){
     fill_grid(&rows, &cols, grid, enemies, player); // placing enemies and player
 
     // Everything starts here
-    //welcome();
+    welcome();
 
-    int terminate = 0; // initializing flag for enemy movement thread
-    EnemiesMovementParams *emp = new_Enemy_Movement_Params(enemies, &rows, &cols, grid, &direction, &terminate);    // Enemy movement thread params
+    int terminate = 0; // <== termination flag for threads
+    // Initializing Enemy movement thread params
+    EnemiesMovementParams *emp = new_Enemy_Movement_Params(enemies, &rows, &cols, grid, &direction, &terminate);    
     
     // Initializing enemy bullet thread params
     Bullet *player_bullet = NULL;
-    Bullet *bullets[11];
+    Bullet *bullets[NUM_ENEMIES];
     int bullets_count = 0;
-    for(int i = 0; i<11;i++){bullets[i] = NULL;}
-    EnemyBulletThreadParams *ebp = new_enemy_bullet_thread_params(grid, bullets, &rows, &bullets_count);
+    for(int i = 0; i<NUM_ENEMIES;i++){bullets[i] = NULL;}
+    EnemyBulletThreadParams *ebp = new_enemy_bullet_thread_params(grid, bullets, &rows, &bullets_count, &terminate);
 
     int bullet_index = 0;       // this variable will be used to generate enemy bullets
 
     // Initializing enemy explosion cleaner params
-    EnemyExplosionParams *eep = new_enemy_explosion_params(grid, &rows, &cols);
-    initialize_threads(&enemy_movement_thread, &player_movement_thread, &enemy_bullet_thread, &enemy_explosion_cleaner_thread, emp, ebp, eep, player);
+    EnemyExplosionParams *eep = new_enemy_explosion_params(grid, &rows, &cols, &terminate);
+    initialize_threads(&enemy_movement_thread, &player_input_thread, &enemy_bullet_thread, &enemy_explosion_cleaner_thread, emp, ebp, eep, player);
+    
     // Main Loop
     while (!g_is_over){
         // draw grid
@@ -136,16 +139,17 @@ void launch(){
         
         g_is_over = check_game_state(&rows);
         if(g_is_over) break;
-        usleep(10000);
+        usleep(21000);
     }
     
-    if(g_win_flag) print_ascii_art();
-    else my_print2(0);
+    if(g_win_flag) print_level_completed();
+    else print_game_over(0);
     // Finishing threads and freeing memory
     terminate = 1;
     pthread_join(enemy_movement_thread, NULL);
-    pthread_cancel(enemy_bullet_thread);
-    pthread_cancel(player_movement_thread);   // the input handler thread can be safely cancelled
+    pthread_join(enemy_explosion_cleaner_thread,NULL);
+    pthread_join(enemy_bullet_thread, NULL);
+    pthread_cancel(player_input_thread);   // the input handler thread can be safely cancelled
     pthread_mutex_destroy(&grid_lock);
     set_conio_mode(1);
     free_enemy_bullets(bullets);
@@ -154,13 +158,13 @@ void launch(){
     free_enemies(enemies);
     free(emp);
     free(ebp);
+    free(eep);
     free_grid(grid, &rows, &cols);
     printf("end\n"); 
 }
 
 int main(){
-    my_print();
+    system("clear");
     launch();
     return 0;
-
 }

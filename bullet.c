@@ -16,22 +16,22 @@ Bullet * new_enemy_bullet(int *pEnemyx, int *pEnemyy){
 }
 
 void free_enemy_bullets(Bullet *bullets[]){
-    for(int i = 0; i < 11; i++){
+    for(int i = 0; i < NUM_ENEMIES; i++){
         free(bullets[i]);
     }
 }
 
 void generate_enemy_bullet(Enemy * enemies[], char **grid, int *pRows, int *pCols, Bullet *bullets[], int *bullet_index, int *bullets_count){
     pthread_mutex_lock(&grid_lock);
-    if(*bullets_count == 11) {
+    if(*bullets_count == NUM_ENEMIES) {
         pthread_mutex_unlock(&grid_lock);
         return;} // only 11 bullets are allowed
     int random;                     // declaring random number
     for(int i = NUM_ENEMIES - 1; i >= 0; i--){
-        if(enemies[i]->is_alive && (rand()%701 == 0)){ // only alive enemies can shoot
+        if(enemies[i]->is_alive && (rand()%607 == 0)){ // only alive enemies can shoot
             grid[enemies[i]->x+1][enemies[i]->y] = grid[enemies[i]->x+1][enemies[i]->y] == 'M' ? 'M' : '*';
             bullets[*bullet_index] = new_enemy_bullet(&enemies[i]->x,&enemies[i]->y);
-            *bullet_index = (*bullet_index + 1)%11;
+            *bullet_index = (*bullet_index + 1)%NUM_ENEMIES;
             *bullets_count++;
             // printf("%d", *bullets_count);
             break;
@@ -41,7 +41,7 @@ void generate_enemy_bullet(Enemy * enemies[], char **grid, int *pRows, int *pCol
 }
 
 void move_enemy_bullets(char **grid, Bullet *bullets[], int *pRows, int *bullets_count){
-    for(int i = 0; i < 11; i++){
+    for(int i = 0; i < NUM_ENEMIES; i++){
         if(bullets[i] != NULL){
             if(bullets[i]->x == *pRows - 1){
                 grid[bullets[i]->x][bullets[i]->y] = ' ';
@@ -58,22 +58,23 @@ void move_enemy_bullets(char **grid, Bullet *bullets[], int *pRows, int *bullets
     }
 }
 
-EnemyBulletThreadParams *new_enemy_bullet_thread_params(char **grid, Bullet *bullets[], int *pRows, int *bullets_count){
+EnemyBulletThreadParams *new_enemy_bullet_thread_params(char **grid, Bullet *bullets[], int *pRows, int *bullets_count, int *terminate){
     EnemyBulletThreadParams *ebtp = (EnemyBulletThreadParams*)malloc(sizeof(EnemyBulletThreadParams));
     ebtp->grid = grid;
     ebtp->bullets = bullets;
     ebtp->pRows = pRows;
     ebtp->bullets_count = bullets_count;
+    ebtp->terminate = terminate;
     return ebtp;
 }
 
 void *enemy_bullet_thread_function(void *params){
     EnemyBulletThreadParams *ebtp = (EnemyBulletThreadParams*)params;
-    while(true){
+    while(!(*ebtp->terminate)){
         pthread_mutex_lock(&grid_lock);
         move_enemy_bullets(ebtp->grid, ebtp->bullets, ebtp->pRows, ebtp->bullets_count);
         pthread_mutex_unlock(&grid_lock);
-        usleep(90000);  // wait 0.9 secs before moving again
+        usleep(100000);  // wait 0.01 secs before moving again
     }
 
     return NULL;
