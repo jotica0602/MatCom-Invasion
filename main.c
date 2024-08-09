@@ -178,10 +178,7 @@ int launch(){
         reset_globals();
         g_current_level++;
         return ask_user();
-        
-    }
-
-    else {print_game_over(0);
+    }else {print_game_over(0);
         return 0;
     }
     // printf("end\n"); 
