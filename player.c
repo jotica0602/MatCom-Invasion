@@ -47,7 +47,7 @@ void *read_input(void *params){
     return NULL;
 }
 
-void handle_player_movement(Player * player, int *pRows, int *pCols, char ** grid){
+void recieve_player_inputs(Player * player, int *pRows, int *pCols, char ** grid){
     pthread_mutex_lock(&grid_lock);
     int temp = player->y;
     grid[player->x][temp] = ' ';

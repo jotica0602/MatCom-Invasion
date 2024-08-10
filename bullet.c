@@ -1,5 +1,6 @@
 #include "bullet.h"
 #include <stdio.h>
+#include <unistd.h>
 
 Bullet * new_player_bullet(int *pPlayerx, int *pPlayery){
     Bullet *player_bullet = (Bullet*)malloc(sizeof(Bullet));
@@ -25,7 +26,7 @@ void generate_enemy_bullet(Enemy * enemies[], char **grid, int *pRows, int *pCol
     pthread_mutex_lock(&grid_lock);
     if(*bullets_count == NUM_ENEMIES) {
         pthread_mutex_unlock(&grid_lock);
-        return;} // only 11 bullets are allowed
+        return;} // only NUM_ENEMIES bullets are allowed
     int random;                     // declaring random number
     for(int i = NUM_ENEMIES - 1; i >= 0; i--){
         if(enemies[i]->is_alive && (rand()%607 == 0)){ // only alive enemies can shoot
@@ -80,6 +81,47 @@ void *enemy_bullet_thread_function(void *params){
     return NULL;
 }
 
+// Player bullet thread parameters
+PlayerBulletThreadParams *new_player_bullet_thread_params(char **grid, Bullet **player_bullet, int *terminate, Player *player){
+    PlayerBulletThreadParams *pbp = (PlayerBulletThreadParams*)malloc(sizeof(PlayerBulletThreadParams));
+    pbp->grid = grid;
+    pbp->player_bullet = player_bullet;
+    pbp->terminate = terminate;
+    pbp->player = player;
+    return pbp;
+}
+
+// When you pass a pointer to a function, you are creating a copy of that pointer, so we need to make a pointer to that pointer. 
+// This way we can modify the original data.
+void move_player_bullet(Bullet **player_bullet, char **grid, Player *player) {
+    // pthread_mutex_lock(&grid_lock);
+    
+    if (*player_bullet != NULL && (*player_bullet)->x == 1) {
+        grid[(*player_bullet)->x][(*player_bullet)->y] = ' ';
+        free(*player_bullet);
+        *player_bullet = NULL;  // Esto ahora modificará el puntero original
+        player->can_shoot = false;
+    }
+    else if (*player_bullet != NULL && (*player_bullet)->x != 0) {
+        grid[(*player_bullet)->x][(*player_bullet)->y] = ' ';
+        (*player_bullet)->x--;
+        grid[(*player_bullet)->x][(*player_bullet)->y] = '^';
+    }   
+    else{return;}
+
+    // pthread_mutex_unlock(&grid_lock);
+}
+
+void *player_bullet_movement_thread_function(void *params){
+    PlayerBulletThreadParams *pbp = (PlayerBulletThreadParams*)params;
+    while(!(*pbp->terminate)){
+        pthread_mutex_lock(&grid_lock);
+        move_player_bullet(pbp->player_bullet, pbp->grid, pbp->player);
+        pthread_mutex_unlock(&grid_lock);
+        usleep(50000);
+    }
+}
+
 int check_player_bullet_collision(char ** grid, int * pRows, int * pCols, Enemy * enemies[]){
     pthread_mutex_lock(&grid_lock);
     for(int i = 0; i < NUM_ENEMIES; i++){
@@ -95,25 +137,6 @@ int check_player_bullet_collision(char ** grid, int * pRows, int * pCols, Enemy 
     return false;
 }
 
-// When you pass a pointer to a function, you are creating a copy of that pointer, so we need to make a pointer to that pointer. 
-// This way we can modify the original data.
-void move_player_bullet(Bullet **player_bullet, char **grid, Player *player) {
-    pthread_mutex_lock(&grid_lock);
-    
-    if (*player_bullet != NULL && (*player_bullet)->x == 1) {
-        grid[(*player_bullet)->x][(*player_bullet)->y] = ' ';
-        free(*player_bullet);
-        *player_bullet = NULL;  // Esto ahora modificará el puntero original
-        player->can_shoot = false;
-    }
-    else if (*player_bullet != NULL && (*player_bullet)->x != 0) {
-        grid[(*player_bullet)->x][(*player_bullet)->y] = ' ';
-        (*player_bullet)->x--;
-        grid[(*player_bullet)->x][(*player_bullet)->y] = '^';
-    }   
-
-    pthread_mutex_unlock(&grid_lock);
-}
 
 int check_enemy_bullet_collision(char **grid, Player *player){
     pthread_mutex_lock(&grid_lock);

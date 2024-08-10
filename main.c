@@ -24,7 +24,7 @@ int check_game_state(int * pRows){
     return false;
 }
 
-int initialize_threads(thread *enemy_movement_thread, thread *player_input_thread, thread *enemy_bullet_thread, thread *enemy_explosion_cleaner_thread, EnemiesMovementParams *emp, EnemyBulletThreadParams *ebp, EnemyExplosionParams *eep, Player *player){
+int initialize_threads(thread *enemy_movement_thread, thread *player_input_thread, thread *enemy_bullet_thread, thread *enemy_explosion_cleaner_thread, thread *player_bullet_movement_thread, EnemiesMovementParams *emp, EnemyBulletThreadParams *ebp, EnemyExplosionParams *eep, PlayerBulletThreadParams *pbp, Player *player){
 
     if (pthread_mutex_init(&grid_lock, NULL) != 0) {
         fprintf(stderr, "Error initializing mutex.\n");
@@ -55,6 +55,12 @@ int initialize_threads(thread *enemy_movement_thread, thread *player_input_threa
     }
     else{printf("Enemy Explosion Cleaner thread successfully created.\n");}
 
+    if(pthread_create(player_bullet_movement_thread, NULL, player_bullet_movement_thread_function, (void*)pbp)){
+        fprintf(stderr, "Error creating Player Bullet Movement thread\n");
+        return 1;
+    }
+    else{printf("Player Bullet Movement thread successfully created.\n");}
+
     return 1;
 }
 
@@ -63,12 +69,12 @@ int ask_user(int mode){
     if(mode){
         printf("\n1 - Play Next Level.\n");
         printf("2 - Quit.\n");
-        printf(">");
+        printf("\n>");
         scanf("%d", &option);
         printf("\n");
         while(option != 1 && option != 2){
             printf("Invalid input.\n");
-            printf(">");
+            printf("\n>");
             scanf("%d", &option);
             printf("\n");
 
@@ -79,11 +85,11 @@ int ask_user(int mode){
     else{
         printf("\n1 - Play Again.\n");
         printf("2 - Quit.\n");
-        printf(">");
+        printf("\n>");
         scanf("%d", &option);
         printf("\n");
         while(option != 1 && option != 2){
-            printf("Invalid input.\n");
+            printf("Invalid input.\n\n");
             printf(">");
             scanf("%d", &option);
             printf("\n");
@@ -103,6 +109,7 @@ int launch(){
     thread player_input_thread;
     thread enemy_bullet_thread;
     thread enemy_explosion_cleaner_thread;
+    thread player_bullet_movement_thread;
 
     // Enabling Terminal Canonical Mode
     set_conio_mode(0);
@@ -138,15 +145,20 @@ int launch(){
 
     // Initializing enemy explosion cleaner params
     EnemyExplosionParams *eep = new_enemy_explosion_params(grid, &rows, &cols, &terminate);
-    initialize_threads(&enemy_movement_thread, &player_input_thread, &enemy_bullet_thread, &enemy_explosion_cleaner_thread, emp, ebp, eep, player);
+    
+    // Initializing player bullet movement thread params
+    PlayerBulletThreadParams *pbp = new_player_bullet_thread_params(grid, &player_bullet, &terminate, player);
+
+    initialize_threads(&enemy_movement_thread, &player_input_thread, &enemy_bullet_thread, &enemy_explosion_cleaner_thread, &player_bullet_movement_thread, emp, ebp, eep, pbp, player);
+
     
     // Main Loop
     while (!g_is_over){
         // draw grid
         draw_screen(&rows,&cols,grid);
-
+        
         // handling player movement
-        handle_player_movement(player, &rows, &cols, grid);
+        recieve_player_inputs(player, &rows, &cols, grid);
         
         // player shots trigger
         if(player->can_shoot && player_bullet == NULL){
@@ -167,13 +179,12 @@ int launch(){
             player_bullet = NULL;
         }
         
-        move_player_bullet(&player_bullet, grid, player);
-
+        // move_player_bullet(&player_bullet, grid, player);
         if(check_enemy_bullet_collision(grid,player)){ g_lives--;}
         
         g_is_over = check_game_state(&rows);
-        if(g_is_over) break;
-        usleep(21000);
+        
+        usleep(30000);
     }
     
     // Finishing threads and freeing memory
@@ -181,6 +192,7 @@ int launch(){
     pthread_join(enemy_movement_thread, NULL);
     pthread_join(enemy_explosion_cleaner_thread,NULL);
     pthread_join(enemy_bullet_thread, NULL);
+    pthread_join(player_bullet_movement_thread, NULL);
     pthread_cancel(player_input_thread);   // the input handler thread can be safely cancelled
     pthread_mutex_destroy(&grid_lock);
     set_conio_mode(1);

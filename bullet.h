@@ -19,6 +19,14 @@ typedef struct EnemyBulletThreadParams{
     int *terminate;
 }EnemyBulletThreadParams;
 
+typedef struct PlayerBulletThreadParams{
+    char **grid;
+    Bullet **player_bullet;
+    int *pRows;
+    int *terminate;
+    Player *player;
+}PlayerBulletThreadParams;
+
 // Player bullet constructor.
 Bullet *new_player_bullet(int *pPlayerx, int *pPlayery);
 
@@ -40,11 +48,18 @@ EnemyBulletThreadParams *new_enemy_bullet_thread_params(char **grid, Bullet *bul
 // Enemy bullet movement thread.
 void *enemy_bullet_thread_function(void *params);
 
-// Player bullet collision handler.
-int check_player_bullet_collision(char ** grid, int * pRows, int * pCols, Enemy * enemies[]);
-
 // Player bullet movement handler
 void move_player_bullet(Bullet **player_bullet, char **grid, Player *player);
+
+// Player bullet thread parameters
+PlayerBulletThreadParams *new_player_bullet_thread_params(char **grid, Bullet **player_bullet, int *terminate, Player *player);
+
+// Player bullet movement thread
+void *player_bullet_movement_thread_function(void *params);
+
+// Player bullet collision handler.
+int check_player_bullet_collision(char ** grid, int * pRows, int *pCols, Enemy * enemies[]);
+
 
 // Checks for enemy bullets collision. If there was any, player will lose 1 live.
 int check_enemy_bullet_collision(char **grid, Player *player);

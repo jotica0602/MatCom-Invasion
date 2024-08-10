@@ -20,6 +20,6 @@ typedef struct Player{
 
 Player *new_player(int *rows, int *cols);
 void *read_input(void *params);
-void handle_player_movement(Player * player, int *pRows, int *pCols, char ** grid);
+void recieve_player_inputs(Player * player, int *pRows, int *pCols, char ** grid);
 
 #endif
