@@ -136,7 +136,7 @@ void print_level_completed() {
 //                                                                                      \__|                                                  
 
 void clean_enemy_explosions(char **grid, int *pRows, int *pCols){
-    for(int i = 1; i < *pRows - 4;i++){
+    for(int i = 1; i < *pRows - 3;i++){
         for(int j = 1; j < *pCols - 1; j++){
             if(grid[i][j] == 'X'){
                 grid[i][j] = ' ';

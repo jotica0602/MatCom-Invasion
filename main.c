@@ -58,18 +58,39 @@ int initialize_threads(thread *enemy_movement_thread, thread *player_input_threa
     return 1;
 }
 
-int ask_user(){
+int ask_user(int mode){
     int option;
-    printf("\n1 - Keep playing.\n");
-    printf("2 - Quit.\n");
-    scanf("%d", &option);
-    while(option != 1 && option != 2){
-        printf("Invalid input.");
+    if(mode){
+        printf("\n1 - Play Next Level.\n");
+        printf("2 - Quit.\n");
+        printf(">");
         scanf("%d", &option);
+        printf("\n");
+        while(option != 1 && option != 2){
+            printf("Invalid input.\n");
+            printf(">");
+            scanf("%d", &option);
+            printf("\n");
 
+        }
+        if(option == 1){return 1;}
+        else {return 0;}
     }
-    if(option == 1){return 1;}
-    else {return 0;}
+    else{
+        printf("\n1 - Play Again.\n");
+        printf("2 - Quit.\n");
+        printf(">");
+        scanf("%d", &option);
+        printf("\n");
+        while(option != 1 && option != 2){
+            printf("Invalid input.\n");
+            printf(">");
+            scanf("%d", &option);
+            printf("\n");
+        }
+        if(option == 1){return 1;}
+        else {return 0;}
+    }
 }
 
 int launch(){
@@ -88,8 +109,8 @@ int launch(){
     
     // Declaring grid size
     int rows, cols;
-    rows = 23;                              //rows
-    cols = 80;                              //columns
+    rows = 16;                              //rows
+    cols = 36;                              //columns
     int direction = rand() % 2;             //stablishing a random direction for enemy movement
     // get_terminal_size(&rows, &cols);
     
@@ -175,18 +196,19 @@ int launch(){
     if(g_win_flag){
         print_level_completed();
         usleep(2000000);
+        level_up();
         reset_globals();
-        g_current_level++;
-        return ask_user();
+        return ask_user(1);
     }else {print_game_over(0);
-        return 0;
+        reset_globals();
+        return ask_user(0);
     }
     // printf("end\n"); 
 }
 
 int main(){
     system("clear");
-    welcome();
+    //welcome();
     while(launch());
     return 0;
 }
