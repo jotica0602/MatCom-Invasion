@@ -215,7 +215,7 @@ int launch(){
 
 int main(){
     system("clear");
-    //welcome();
+    welcome();
     while(launch());
     return 0;
 }
