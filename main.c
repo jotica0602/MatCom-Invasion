@@ -197,6 +197,7 @@ int launch(){
     free(emp);
     free(ebp);
     free(eep);
+    free(pbp);
     free_grid(grid, &rows, &cols);
 
     if(g_win_flag){
