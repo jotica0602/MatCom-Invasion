@@ -64,39 +64,33 @@ int initialize_threads(thread *enemy_movement_thread, thread *player_input_threa
     return 1;
 }
 
-int ask_user(int mode){
+int ask_user(int mode) {
     int option;
-    if(mode){
-        printf("\n1 - Play Next Level.\n");
-        printf("2 - Quit.\n");
-        printf("\n>");
-        scanf("%d", &option);
-        printf("\n");
-        while(option != 1 && option != 2){
-            printf("Invalid input.\n");
-            printf("\n>");
-            scanf("%d", &option);
-            printf("\n");
+    int result;
 
+    do {
+        if (mode){
+            printf("\n1 - Play Next Level.\n");
+            printf("2 - Quit.\n");
+        } else {
+            printf("\n1 - Play Again.\n");
+            printf("2 - Quit.\n");
         }
-        if(option == 1){return 1;}
-        else {return 0;}
-    }
-    else{
-        printf("\n1 - Play Again.\n");
-        printf("2 - Quit.\n");
+
         printf("\n>");
-        scanf("%d", &option);
+        result = scanf("%d", &option);
         printf("\n");
-        while(option != 1 && option != 2){
-            printf("Invalid input.\n\n");
-            printf(">");
-            scanf("%d", &option);
-            printf("\n");
+
+        if (result != 1) {
+            printf("Invalid input.\n");
+            while (getchar() != '\n');  // Limpiar el búfer de entrada
+        } else if (option != 1 && option != 2) {
+            printf("Invalid option. Please enter 1 or 2.\n");
         }
-        if(option == 1){return 1;}
-        else {return 0;}
-    }
+
+    } while (option != 1 && option != 2);
+
+    return (option == 1) ? 1 : 0;
 }
 
 int launch(){
