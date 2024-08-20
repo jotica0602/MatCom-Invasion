@@ -64,6 +64,29 @@ int initialize_threads(thread *enemy_movement_thread, thread *player_input_threa
     return 1;
 }
 
+void finish_threads(thread *enemy_movement_thread, thread *player_input_thread, thread *enemy_bullet_thread, thread *enemy_explosion_cleaner_thread, thread *player_bullet_movement_thread, int *pTerminate){
+    *pTerminate = 1;
+    pthread_cancel(*player_input_thread);
+    pthread_join(*enemy_movement_thread, NULL);
+    pthread_join(*enemy_bullet_thread, NULL);
+    pthread_join(*enemy_explosion_cleaner_thread, NULL);
+    pthread_join(*player_bullet_movement_thread, NULL);
+    pthread_mutex_destroy(&grid_lock);
+}
+
+void free_memory(Bullet *bullets[], Bullet **player_bullet, Player **player, Enemy *enemies[], EnemiesMovementParams **emp, EnemyBulletThreadParams ** ebp, EnemyExplosionParams **eep, PlayerBulletThreadParams **pbp, char *** grid, int *pRows, int *pCols){
+    free_enemy_bullets(bullets);
+    free(*player_bullet);
+    free(*player);
+    free_enemies(enemies);
+    free(*emp);
+    free(*ebp);
+    free(*eep);
+    free(*pbp);
+    free_grid(*grid, pRows, pCols);
+}
+
+
 int ask_user(int mode) {
     int option;
     int result;
@@ -105,7 +128,7 @@ int launch(){
     thread enemy_explosion_cleaner_thread;
     thread player_bullet_movement_thread;
 
-    // Enabling Terminal Canonical Mode
+    // disabling canonical mode
     set_conio_mode(0);
     
     // Declaring grid size
@@ -169,11 +192,9 @@ int launch(){
         
         if(check_player_bullet_collision(grid, &rows, &cols, enemies)){
             grid[player_bullet->x][player_bullet->y] = ' ';
-            // free(player_bullet);
             player_bullet = NULL;
         }
         
-        // move_player_bullet(&player_bullet, grid, player);
         if(check_enemy_bullet_collision(grid,player)){ g_lives--;}
         
         g_is_over = check_game_state(&rows);
@@ -182,23 +203,11 @@ int launch(){
     }
     
     // Finishing threads and freeing memory
-    terminate = 1;
-    pthread_join(enemy_movement_thread, NULL);
-    pthread_join(enemy_explosion_cleaner_thread,NULL);
-    pthread_join(enemy_bullet_thread, NULL);
-    pthread_join(player_bullet_movement_thread, NULL);
-    pthread_cancel(player_input_thread);   // the input handler thread can be safely cancelled
-    pthread_mutex_destroy(&grid_lock);
+    finish_threads(&enemy_movement_thread, &player_input_thread, &enemy_bullet_thread, &enemy_explosion_cleaner_thread, &player_bullet_movement_thread, &terminate);
+    free_memory(bullets, &player_bullet, &player, enemies, &emp, &ebp, &eep, &pbp, &grid, &rows, &cols);
+
+    // enabling canonical mode
     set_conio_mode(1);
-    free_enemy_bullets(bullets);
-    free(player_bullet);
-    free(player);
-    free_enemies(enemies);
-    free(emp);
-    free(ebp);
-    free(eep);
-    free(pbp);
-    free_grid(grid, &rows, &cols);
 
     if(g_win_flag){
         print_level_completed();
@@ -219,3 +228,4 @@ int main(){
     while(launch());
     return 0;
 }
+
