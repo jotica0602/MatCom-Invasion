@@ -1,18 +1,32 @@
 #include "terminal.h"
 
-void get_terminal_size(int *rows, int *cols)
+int get_cols()
 {
     struct winsize w;
     // Getting terminal dimensions
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
     {
         perror("ioctl");
-        return;
+        // return;
     }
-    *rows = w.ws_row/3;
-    *cols = w.ws_col/3;
+    int rows = w.ws_row;
+    // int cols = w.ws_col;
+    return rows;
 }
 
+int get_rows()
+{
+    struct winsize w;
+    // Getting terminal dimensions
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == -1)
+    {
+        perror("ioctl");
+        // return;
+    }
+    // int rows = w.ws_row;
+    int cols = w.ws_col;
+    return cols;
+}
 
 void set_conio_mode(int mode)
 {

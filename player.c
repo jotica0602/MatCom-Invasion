@@ -1,70 +1,58 @@
 #include "player.h"
-
-Player *new_player(int *rows, int *cols){
-    Player *player = (Player *)malloc(sizeof(Player));
-    player->y = *cols / 2;
-    player->x = *rows - 1;
-    player->can_shoot = false;
-    player->proyectile_is_alive = false;
-    player->is_alive = true;
-    player->moved_LEFT = false;
-    player->moved_RIGHT = false;
-    return player;
-}
+#include "globals.h"
+#include <stdbool.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 void *read_input(void *params){
-    Player *player = (Player *)params;
     char key;
-    while (1){
+    while (!terminate){
         key = getchar();
-        if (key != EOF){
-            switch (key){
+        if (key == '\033'){
+            getchar();
+            switch(getchar()){
             // LEFT
-            case 'a':
-                player->moved_LEFT = true;
-                // printf("%d",player->y);
+            case 'D':
+                player.moved_left = true;
+                // printf("%d",player.y);
                 // printf("LEFT");
                 break;
             // RIGHT
-            case 'd':
-                player->moved_RIGHT = true;
-                // printf("%d",player->y);
+            case 'C':
+                player.moved_right = true;
+                // printf("%d",player.y);
                 // printf("RIGHT");
                 break;
-            // shot
-            case 'j':
-                player->can_shoot = true;
-                break;
-            // quit
-            case 'q': 
-                g_is_over = true;          
-                break;
-            default:
-                break;
-            }
+        }
+        }
+        else if(key == ' '){
+            player.can_shoot = true;
+        }
+        else if(key == 'q'){
+            g_is_over = true;    
+            terminate = 1;      
         }
     }
     return NULL;
 }
 
-void recieve_player_inputs(Player * player, int *pRows, int *pCols, char ** grid){
-    pthread_mutex_lock(&grid_lock);
-    int temp = player->y;
-    grid[player->x][temp] = ' ';
-    if(player->moved_LEFT){
-        player->moved_LEFT = false;
-        player->y--;
-        if(player->y<1){                // player in left bound
-            player->y = 1;
+void process_player_inputs(){
+    int temp = player.y;
+    grid[player.x][temp] = ' ';
+    if(player.moved_left){
+        player.moved_left = false;
+        player.y--;
+        if(player.y<1){                // player in left bound
+            player.y = 1;
         }
     }
-    else if(player->moved_RIGHT){
-        player->moved_RIGHT = false;
-        player->y++;
-        if(player->y > *pCols - 2){     // player in right bound
-            player->y = *pCols - 2;
+    else if(player.moved_right){
+        player.moved_right = false;
+        player.y++;
+        if(player.y > COLS - 2){     // player in right bound
+            player.y = COLS - 2;
         }
     }
-    grid[player->x][player->y] = 'A';
-    pthread_mutex_unlock(&grid_lock);
+    grid[player.x][player.y] = 'A';
 }

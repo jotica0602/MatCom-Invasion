@@ -17,14 +17,13 @@ int *terminate;
 // Display welcome screen.
 void welcome();
 // Draw screen.
-void draw_screen(int *pRows, int *pCols, char ** grid);
+void draw_screen();
 
 void print_game_title();
 void print_game_over();
 void print_level_completed();
 
-EnemyExplosionParams *new_enemy_explosion_params(char **grid, int *pRows, int *pCols, int *terminate);
-void clean_enemy_explosions(char **grid, int *pRows, int *pCols);
-void *enemy_explosions_cleaner_thread(void *params);
+void clean_enemy_explosions();
+void *enemy_explosions_routine(void *params);
 
 #endif

@@ -14,24 +14,67 @@ void welcome(){
     getchar();
 }
 
-void draw_screen(int *pRows, int *pCols, char ** grid){
+void draw_screen(){
     system("clear");
     print_game_title();
-    pthread_mutex_lock(&grid_lock);
-    for (int i = 0; i < *pRows; i++){
-        for (int j = 0; j < *pCols; j++){
-            // g_max = grid[i][j] == 'M' && grid[i] > g_max? 
-            printf("%2c", grid[i][j]);
+    // pthread_mutex_lock(&grid_lock);
+
+    /*
+    \033[0;30m: Negro
+    \033[0;31m: Rojo
+    \033[0;32m: Verde
+    \033[0;33m: Amarillo
+    \033[0;34m: Azul
+    \033[0;35m: Magenta
+    \033[0;36m: Cian
+    \033[0;37m: Blanco 
+    */   
+   
+    for (int i = 0; i < ROWS; i++){
+        for (int j = 0; j < COLS; j++){
+            switch(grid[i][j]){
+                case 'A':
+                    printf("\033[38;2;255;138;156m%2c\033[0m", grid[i][j]);
+                    break;
+                
+                case 'M':
+                    printf("\033[1;33m%2c\033[0m", grid[i][j]);
+                    break;
+                
+                case '*':
+                    printf("\033[1;31m%2c\033[0m", grid[i][j]);
+                    break;
+                
+                case '^':
+                    printf("\033[1;36m%2c\033[0m", grid[i][j]);
+                    break;
+                
+                case 'X':
+                    printf("\033[1;31m%2c\033[0m", grid[i][j]);
+                    break;
+
+                case '|':
+                    printf("\033[1;37m█\033[0m");
+                    break;
+                
+                case '-':
+                    printf("%2c", ' ');
+                    break;
+
+                default:
+                    printf("%2c", grid[i][j]);
+                    break;
+            }
         }
         printf("\n");
     }
-    printf(" Score:%-d-------------------------Level:%d-------------------------Lives:%d\t\t\t\n" , g_score, g_current_level, g_lives);
-    pthread_mutex_unlock(&grid_lock);
+    printf("\n\033[1;37mScore:\033[0m\033[1;33m%-d\033[0m-------------------------\033[1;37mLevel:%d\033[0m------------------------\033[1;37mLives:\033[0m\033[1;31m%d\033[0m\t\t\t\n", g_score, g_current_level, g_lives);
+    // pthread_mutex_unlock(&grid_lock);
 }
 
 void print_game_title(){
-    printf("\t█▀▄▀█ ▄▀█ ▀█▀ █▀▀ █▀█ █▀▄▀█   █ █▄░█ █░█ ▄▀█ █▀ █ █▀█ █▄░█\n");
-    printf("\t█░▀░█ █▀█ ░█░ █▄▄ █▄█ █░▀░█   █ █░▀█ ▀▄▀ █▀█ ▄█ █ █▄█ █░▀█\n");
+    printf("\t\033[1;37m█▀▄▀█ ▄▀█ ▀█▀ █▀▀ █▀█ █▀▄▀█   █ █▄░█ █░█ ▄▀█ █▀ █ █▀█ █▄░█\033[0m\n");
+    printf("\t\033[1;37m█░▀░█ █▀█ ░█░ █▄▄ █▄█ █░▀░█   █ █░▀█ ▀▄▀ █▀█ ▄█ █ █▄█ █░▀█\033[0m\n");
     // printf("███╗░░░███╗░█████╗░████████╗░█████╗░░█████╗░███╗░░░███╗  ██╗███╗░░██╗██╗░░░██╗░█████╗░░██████╗██╗░█████╗░███╗░░██╗\n");
     // printf("████╗░████║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗████╗░████║  ██║████╗░██║██║░░░██║██╔══██╗██╔════╝██║██╔══██╗████╗░██║\n");
     // printf("██╔████╔██║███████║░░░██║░░░██║░░╚═╝██║░░██║██╔████╔██║  ██║██╔██╗██║╚██╗░██╔╝███████║╚█████╗░██║██║░░██║██╔██╗██║\n");
@@ -75,8 +118,8 @@ void print_game_title(){
 // \__|     \__| \_______|  \____/  \______/  \______/ \__| \__| \__|      \______|\__|  \__|   \_/    \_______|\_______/ \__| \______/ \__|  \__|
 
 void print_game_over(){
-    printf("\t \t█▀▀ ▄▀█ █▀▄▀█ █▀▀   █▀█ █░█ █▀▀ █▀█\n");
-    printf("\t \t█▄█ █▀█ █░▀░█ ██▄   █▄█ ▀▄▀ ██▄ █▀▄\n");
+    printf("\n\t \t\033[1;31m█▀▀ ▄▀█ █▀▄▀█ █▀▀   █▀█ █░█ █▀▀ █▀█\033[0m\n");
+    printf("\t \t\033[1;31m█▄█ █▀█ █░▀░█ ██▄   █▄█ ▀▄▀ ██▄ █▀▄\033[0m\n");
     // const char *r1 = "\t\t\t\t$$$$$$\\                                           $$$$$$\\                                 \n";
     // const char *r2 = "\t\t\t\t$$  __$$\\                                         $$  __$$\\                                \n";
     // const char *r3 = "\t\t\t\t$$ /  \\__| $$$$$$\\  $$$$$$\\$$$$\\   $$$$$$\\        $$ /  $$ |$$\\    $$\\  $$$$$$\\   $$$$$$\\  \n";
@@ -135,9 +178,9 @@ void print_level_completed() {
 //                                                                                      $$ |                                                  
 //                                                                                      \__|                                                  
 
-void clean_enemy_explosions(char **grid, int *pRows, int *pCols){
-    for(int i = 1; i < *pRows - 3;i++){
-        for(int j = 1; j < *pCols - 1; j++){
+void clean_enemy_explosions(){
+    for(int i = 1; i < ROWS - 3;i++){
+        for(int j = 1; j < COLS - 1; j++){
             if(grid[i][j] == 'X'){
                 grid[i][j] = ' ';
             }
@@ -145,22 +188,12 @@ void clean_enemy_explosions(char **grid, int *pRows, int *pCols){
     }
 }
 
-EnemyExplosionParams *new_enemy_explosion_params(char **grid, int *pRows, int *pCols, int *terminate){
-    EnemyExplosionParams *eep = (EnemyExplosionParams*)malloc(sizeof(EnemyExplosionParams));
-    eep->grid = grid;
-    eep->pRows = pRows;
-    eep->pCols = pCols;
-    eep->terminate = terminate;
-    return eep;
-}
-
-void *enemy_explosions_cleaner_thread(void *params){
-    EnemyExplosionParams *eep = (EnemyExplosionParams*)params;
-    while(!(*eep->terminate)){
+void *enemy_explosions_routine(void *params){
+    while(!terminate){
         pthread_mutex_lock(&grid_lock);
-        clean_enemy_explosions(eep->grid, eep->pRows, eep->pCols);
+        clean_enemy_explosions();
         pthread_mutex_unlock(&grid_lock);
-        usleep(250000);
+        usleep(500000);
     }
     return NULL;
 }

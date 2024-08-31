@@ -2,19 +2,31 @@
 #include "enemy.h"
 #include "player.h"
 #include "bullet.h"
-#include "grid.h"
 #include "terminal.h"
 #include "visuals.h"
 #include <stdio.h>
-#include <math.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <stdbool.h>
 #include <time.h>
 
-int check_game_state(int * pRows){
-    if(g_max == *pRows - 3 || g_lives == 0){
+int init();                 // Initialize game
+void finish_threads();      // Finish all threads
+int check_game_state();     // Checks for game over condition or level completion
+int initialize_threads();   // Initialize all threads
+int ask_user(int mode);     // Asks user 
+
+int main(){
+    system("clear");
+    // welcome();              
+    while(init()); 
+    return 0;
+}
+
+int check_game_state(){
+    if(g_max == ROWS - 3 || g_lives == 0){
+        terminate = 1;
         return true;
     }
     if(g_score == NUM_ENEMIES) {
@@ -23,69 +35,6 @@ int check_game_state(int * pRows){
     }
     return false;
 }
-
-int initialize_threads(thread *enemy_movement_thread, thread *player_input_thread, thread *enemy_bullet_thread, thread *enemy_explosion_cleaner_thread, thread *player_bullet_movement_thread, EnemiesMovementParams *emp, EnemyBulletThreadParams *ebp, EnemyExplosionParams *eep, PlayerBulletThreadParams *pbp, Player *player){
-
-    if (pthread_mutex_init(&grid_lock, NULL) != 0) {
-        fprintf(stderr, "Error initializing mutex.\n");
-        return 1;
-    }else{printf("Mutex thread succesfully created.\n");}
-
-    if(pthread_create(player_input_thread, NULL, read_input, (void *)player) != 0){
-        fprintf(stderr, "Error creating the keyreader thread.\n");
-        restore_terminal();
-        free(player);
-        return 1;
-    }else{printf("Keyreader thread successfully created.\n");}
-
-    if(pthread_create(enemy_movement_thread, NULL, enemies_movement_thread, (void *)emp)) {
-        fprintf(stderr, "Error creating Enemy Movement thread\n");
-        return 1;
-    }else{printf("Enemy movement thread successfully created.\n");}
-
-    if(pthread_create(enemy_bullet_thread, NULL, enemy_bullet_thread_function, (void*)ebp)){
-        fprintf(stderr, "Error creating Enemy Bullet Movement thread\n");
-        return 1;
-    }
-    else{printf("Enemy Bullet Movement thread successfully created.\n");}
-
-    if(pthread_create(enemy_explosion_cleaner_thread, NULL, enemy_explosions_cleaner_thread, (void*)eep)){
-        fprintf(stderr, "Error creating Enemy Explosion Cleaner thread\n");
-        return 1;
-    }
-    else{printf("Enemy Explosion Cleaner thread successfully created.\n");}
-
-    if(pthread_create(player_bullet_movement_thread, NULL, player_bullet_movement_thread_function, (void*)pbp)){
-        fprintf(stderr, "Error creating Player Bullet Movement thread\n");
-        return 1;
-    }
-    else{printf("Player Bullet Movement thread successfully created.\n");}
-
-    return 1;
-}
-
-void finish_threads(thread *enemy_movement_thread, thread *player_input_thread, thread *enemy_bullet_thread, thread *enemy_explosion_cleaner_thread, thread *player_bullet_movement_thread, int *pTerminate){
-    *pTerminate = 1;
-    pthread_cancel(*player_input_thread);
-    pthread_join(*enemy_movement_thread, NULL);
-    pthread_join(*enemy_bullet_thread, NULL);
-    pthread_join(*enemy_explosion_cleaner_thread, NULL);
-    pthread_join(*player_bullet_movement_thread, NULL);
-    pthread_mutex_destroy(&grid_lock);
-}
-
-void free_memory(Bullet *bullets[], Bullet **player_bullet, Player **player, Enemy *enemies[], EnemiesMovementParams **emp, EnemyBulletThreadParams ** ebp, EnemyExplosionParams **eep, PlayerBulletThreadParams **pbp, char *** grid, int *pRows, int *pCols){
-    free_enemy_bullets(bullets);
-    free(*player_bullet);
-    free(*player);
-    free_enemies(enemies);
-    free(*emp);
-    free(*ebp);
-    free(*eep);
-    free(*pbp);
-    free_grid(*grid, pRows, pCols);
-}
-
 
 int ask_user(int mode) {
     int option;
@@ -106,7 +55,7 @@ int ask_user(int mode) {
 
         if (result != 1) {
             printf("Invalid input.\n");
-            while (getchar() != '\n');  // Limpiar el búfer de entrada
+            while (getchar() != '\n');  // Clearing input buffer
         } else if (option != 1 && option != 2) {
             printf("Invalid option. Please enter 1 or 2.\n");
         }
@@ -116,116 +65,115 @@ int ask_user(int mode) {
     return (option == 1) ? 1 : 0;
 }
 
-int launch(){
-    // initializing random number generator. time(NULL) is the seed.
-    // time(NULL) returns the current time
-    srand(time(NULL));  
-    
-    // Declaring threads
-    thread enemy_movement_thread;
-    thread player_input_thread;
-    thread enemy_bullet_thread;
-    thread enemy_explosion_cleaner_thread;
-    thread player_bullet_movement_thread;
-
-    // disabling canonical mode
-    set_conio_mode(0);
-    
-    // Declaring grid size
-    int rows, cols;
-    rows = 16;                              //rows
-    cols = 36;                              //columns
-    int direction = rand() % 2;             //stablishing a random direction for enemy movement
+int init(){
+    srand(time(NULL));          // Initializing random number generator. time(NULL) is the seed.
+    direction = rand() % 2;     // Stablishing a random direction for enemy movement
+    set_conio_mode(0);          // Disabling canonical mode
+    initialize_player();        // Initializing player properties
+    set_up_grid();              // Placing enemies and player
+    initialize_threads();
     // get_terminal_size(&rows, &cols);
-    
-
-    // initializing enemy array
-    Enemy * enemies[NUM_ENEMIES];
-    Player *player = new_player(&rows, &cols);      // initializing player
-    char **grid = new_grid(&rows,&cols);            // initializing matrix
-    fill_grid(&rows, &cols, grid, enemies, player); // placing enemies and player
 
     // Everything starts here
 
-    int terminate = 0; // <== termination flag for threads
-    // Initializing Enemy movement thread params
-    EnemiesMovementParams *emp = new_Enemy_Movement_Params(enemies, &rows, &cols, grid, &direction, &terminate);    
-    
-    // Initializing enemy bullet thread params
-    Bullet *player_bullet = NULL;
-    Bullet *bullets[NUM_ENEMIES];
-    int bullets_count = 0;
-    for(int i = 0; i<NUM_ENEMIES;i++){bullets[i] = NULL;}
-    EnemyBulletThreadParams *ebp = new_enemy_bullet_thread_params(grid, bullets, &rows, &bullets_count, &terminate);
-
-    int bullet_index = 0;       // this variable will be used to generate enemy bullets
-
-    // Initializing enemy explosion cleaner params
-    EnemyExplosionParams *eep = new_enemy_explosion_params(grid, &rows, &cols, &terminate);
-    
-    // Initializing player bullet movement thread params
-    PlayerBulletThreadParams *pbp = new_player_bullet_thread_params(grid, &player_bullet, &terminate, player);
-
-    initialize_threads(&enemy_movement_thread, &player_input_thread, &enemy_bullet_thread, &enemy_explosion_cleaner_thread, &player_bullet_movement_thread, emp, ebp, eep, pbp, player);
-
-    
     // Main Loop
     while (!g_is_over){
-        // draw grid
-        draw_screen(&rows,&cols,grid);
+        pthread_mutex_lock(&grid_lock);     // Entering critical zone
+        draw_screen();                      // Draw grid
+        process_player_inputs();            // Handle player movement
         
-        // handling player movement
-        recieve_player_inputs(player, &rows, &cols, grid);
-        
-        // player shots trigger
-        if(player->can_shoot && player_bullet == NULL){
-            pthread_mutex_lock(&grid_lock);
-            player_bullet = new_player_bullet(&player->x,&player->y);
-            grid[player_bullet->x][player_bullet->y] = '^';
-            player->can_shoot = false;
-            pthread_mutex_unlock(&grid_lock);
+        if(player.can_shoot && !player_bullet.is_active){
+            player_bullet.x = player.x - 1;
+            player_bullet.y = player.y;
+            player_bullet.is_active = true;
+            grid[player_bullet.x][player_bullet.y] = '^';
+            player.can_shoot = false;
         }
 
-        // enemy bullet generator
-        generate_enemy_bullet(enemies, grid, &rows, &cols, bullets, &bullet_index, &bullets_count);
+        generate_enemy_bullet();            // Enemy bullet generator
         
-        
-        if(check_player_bullet_collision(grid, &rows, &cols, enemies)){
-            grid[player_bullet->x][player_bullet->y] = ' ';
-            player_bullet = NULL;
+        if(check_player_bullet_collision()){
+            // grid[player_bullet.x][player_bullet.y] = ' ';
+            player_bullet.is_active = false;
         }
         
-        if(check_enemy_bullet_collision(grid,player)){ g_lives--;}
+        if(check_enemy_bullet_collision()){ g_lives--;}
         
-        g_is_over = check_game_state(&rows);
-        
+        g_is_over = check_game_state();
+        pthread_mutex_unlock(&grid_lock);   // Leaving critical zone
         usleep(30000);
     }
     
-    // Finishing threads and freeing memory
-    finish_threads(&enemy_movement_thread, &player_input_thread, &enemy_bullet_thread, &enemy_explosion_cleaner_thread, &player_bullet_movement_thread, &terminate);
-    free_memory(bullets, &player_bullet, &player, enemies, &emp, &ebp, &eep, &pbp, &grid, &rows, &cols);
-
-    // enabling canonical mode
-    set_conio_mode(1);
+    
+    finish_threads();                       // Finishing threads
+    set_conio_mode(1);                      // Enabling canonical mode
 
     if(g_win_flag){
         print_level_completed();
-        usleep(2000000);
+        usleep(1000000);
         level_up();
         reset_globals();
         return ask_user(1);
-    }else {print_game_over(0);
+    } else {
+        print_game_over(0);
         reset_globals();
         return ask_user(0);
     }
-    // printf("end\n"); 
-}
-
-int main(){
-    system("clear");
-    welcome();
-    while(launch());
+    
+    printf("end\n"); 
     return 0;
 }
 
+int initialize_threads(){
+    if(pthread_mutex_init(&grid_lock, NULL)){
+        printf("Error initializing mutex thread.\n");
+        return 1;
+    } else {
+        printf("Mutex thread successfully initialized.\n");
+    }
+
+    if(pthread_create(&player_input_thread, NULL, read_input, NULL)){
+        printf("Error creating player input thread.\n");
+        return 1;
+    } else {
+        printf("Player input thread successfully created.\n");
+    }
+
+    if(pthread_create(&enemy_movement_thread, NULL, enemies_movement_routine, NULL)){
+        printf("Error creating enemy movement thread.\n");
+        return 1;
+    } else {
+        printf("Enemy movement thread successfully created.\n");
+    }
+
+    if(pthread_create(&player_bullet_movement_thread, NULL, player_bullet_movement_routine, NULL)){
+        printf("Error creating player bullet movement thread.\n");
+        return 1;
+    } else {
+        printf("Player bullet movement thread successfully created.\n");
+    }
+
+    if(pthread_create(&enemy_bullet_movement_thread, NULL, enemy_bullet_routine, NULL)){
+        printf("Error creating enemy bullet movement thread.\n");
+        return 1;
+    } else {
+        printf("Enemy bullet movement thread successfully created.\n");
+    }
+
+    if(pthread_create(&enemy_explosion_cleaner_thread, NULL, enemy_explosions_routine, NULL)){
+        printf("Error creating enemy explosion cleaner thread.\n");
+        return 1;
+    } else {
+        printf("Enemy explosion cleaner thread successfully created.\n");
+    }
+}
+
+void finish_threads(){
+    terminate = 1;
+    pthread_cancel(player_input_thread);
+    pthread_join(enemy_movement_thread, NULL);
+    pthread_join(enemy_bullet_movement_thread, NULL);
+    pthread_join(enemy_explosion_cleaner_thread, NULL);
+    pthread_join(player_bullet_movement_thread, NULL);
+    pthread_mutex_destroy(&grid_lock);
+}
