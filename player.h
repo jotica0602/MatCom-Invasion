@@ -5,7 +5,6 @@ typedef struct{
     int x;
     int y;
     int can_shoot;
-    int is_alive;
     int moved_left; 
     int moved_right;
 } Player;

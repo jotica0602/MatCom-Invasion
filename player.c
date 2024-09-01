@@ -15,14 +15,10 @@ void *read_input(void *params){
             // LEFT
             case 'D':
                 player.moved_left = true;
-                // printf("%d",player.y);
-                // printf("LEFT");
                 break;
             // RIGHT
             case 'C':
                 player.moved_right = true;
-                // printf("%d",player.y);
-                // printf("RIGHT");
                 break;
         }
         }
@@ -30,6 +26,8 @@ void *read_input(void *params){
             player.can_shoot = true;
         }
         else if(key == 'q'){
+            printf("salir");
+            exit(0);
             g_is_over = true;    
             terminate = 1;      
         }
