@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void *read_input(void *params){
+void *read_input(void *params){ // Event
     char key;
     while (!terminate){
         key = getchar();
@@ -26,10 +26,9 @@ void *read_input(void *params){
             player.can_shoot = true;
         }
         else if(key == 'q'){
-            printf("salir");
-            exit(0);
             g_is_over = true;    
             terminate = 1;      
+            exit(0);
         }
     }
     return NULL;
