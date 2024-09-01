@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-void new_enemy_bullet(Bullet *bullet, int enemy_index){
+void new_enemy_bullet(Bullet *bullet, int enemy_index){ // Next Fit Strat
     bullet->is_active = true;
     bullet->x = enemies[enemy_index].x + 1;
     bullet->y = enemies[enemy_index].y;
@@ -19,10 +19,10 @@ int overlaps_enemy(int x, int y){
 }
 
 void generate_enemy_bullet(){
-    if(active_enemy_bullets == NUM_ENEMIES){ // only NUM_ENEMIES bullets are allowed
+    if(active_enemy_bullets == MAX_ENEMY_BULLETS){ // only NUM_ENEMIES bullets are allowed
         return;
     } 
-    for(int i = NUM_ENEMIES - 1; i >= 0; i--){
+    for(int i = 0; i < MAX_ENEMY_BULLETS; i++){
         if(enemies[i].is_alive && (rand() % 607 == 0)){ // only alive enemies can shoot
             new_enemy_bullet(&enemy_bullets[enemy_bullet_index], i);
             break;
@@ -31,7 +31,7 @@ void generate_enemy_bullet(){
 }
 
 void move_enemy_bullets(){
-    for(int i = 0; i < NUM_ENEMIES; i++){
+    for(int i = 0; i < MAX_ENEMY_BULLETS; i++){
         if(enemy_bullets[i].is_active && enemy_bullets[i].x == ROWS - 1){
             grid[enemy_bullets[i].x][enemy_bullets[i].y] = ' ';
             enemy_bullets[i].is_active = false;
@@ -103,6 +103,7 @@ int check_enemy_bullet_collision(){
     if(grid[player.x-1][player.y] == '*'){
         grid[player.x-1][player.y] = ' ';
         collision = true;
+        active_enemy_bullets--;
     }
     return collision;
 }
