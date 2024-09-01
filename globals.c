@@ -15,7 +15,7 @@ char grid[ROWS][COLS];
 Player player;
 Bullet player_bullet;
 Enemy enemies[NUM_ENEMIES];
-Bullet enemy_bullets[NUM_ENEMIES];
+Bullet enemy_bullets[MAX_ENEMY_BULLETS];
 
 int terminate = 0;
 int direction;
@@ -94,7 +94,7 @@ void initialize_player_bullet(){
 }
 
 void initialize_enemy_bullets(){
-    for(int i = 0; i < NUM_ENEMIES; i++){
+    for(int i = 0; i < MAX_ENEMY_BULLETS; i++){
         enemy_bullets[i].is_active = false;
     }
 }
@@ -122,6 +122,7 @@ void reset_globals(){
     g_lives = 3;
     g_win_flag = false;
     living_enemy_count = NUM_ENEMIES;
+    active_enemy_bullets = 0;
     terminate = 0;
 }
 

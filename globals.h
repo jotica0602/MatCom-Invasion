@@ -10,6 +10,7 @@
 #define LEFT 0                                  // Left enemy movement direction
 #define RIGHT 1                                 // Right enemy movement direction
 #define NUM_ENEMIES 55                          // Number of enemies
+#define MAX_ENEMY_BULLETS NUM_ENEMIES           // MAX_ENEMY_BULLETS
 #define ROWS 16                                 // Grid rows
 #define COLS 36                                 // Grid columns
 #define UP_ARROW 65
@@ -31,7 +32,7 @@ extern char grid[ROWS][COLS];                   // Game grid
 extern Player player;                           // Player
 extern Bullet player_bullet;                    // Player bullet
 extern Enemy enemies[NUM_ENEMIES];              // Enemy array
-extern Bullet enemy_bullets[NUM_ENEMIES];       // Enemy bullets array
+extern Bullet enemy_bullets[MAX_ENEMY_BULLETS]; // Enemy bullets array
 
 extern int direction;                           // Enemy direction
 extern int g_max;                               // Enemy lowest row
