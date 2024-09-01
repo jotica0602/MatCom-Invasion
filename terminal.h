@@ -7,14 +7,5 @@
 #include <stdio.h>
 
 void get_terminal_size(int *rows, int *cols);
-
-int get_rows();
-
-int get_cols();
-
-// Terminal Canonic mode enabler/disabler
-void set_conio_mode(int mode);
-
-void restore_terminal();
-
+void set_conio_mode(int mode);                  // Terminal Canonic mode enabler/disabler
 #endif

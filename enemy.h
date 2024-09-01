@@ -5,6 +5,7 @@ typedef struct{
     int y;
     int x;
     int is_alive;
+    char type;
 } Enemy;
 
 enum Collision{
@@ -13,11 +14,9 @@ enum Collision{
     NO_COLLISION = 2,
 };
 
-// Multiple Enemies movement handling.
-void handle_enemies_movement();
 
-// Enemies movement handler routine
-void *enemies_movement_routine(void *params);
+void handle_enemies_movement();                 // Multiple Enemies movement handling.
+void *enemies_movement_routine(void *params);   // Enemies movement handler routine
 
 
 #endif

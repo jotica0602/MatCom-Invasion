@@ -17,9 +17,36 @@ int check_game_state();     // Checks for game over condition or level completio
 int initialize_threads();   // Initialize all threads
 int ask_user(int mode);     // Asks user 
 
+void print_menu(int mode, int selected_option) {
+    draw_screen();
+    if (mode) {
+        print_level_completed();
+        if (selected_option == 1)
+            printf("\t\t\t\033[1;37m->\033[0m \033[1;33mPlay Next Level\033[0m\n");
+        else
+            printf("\t\t\t   \033[1;37mPlay Next Level\033[0m\n");
+
+        if (selected_option == 2)
+            printf("\t\t\t\033[1;37m->\033[0m \033[1;31mQuit\033[0m\n");
+        else
+            printf("\t\t\t   \033[1;310mQuit\033[m\n");
+    } else {
+        print_game_over();
+        if (selected_option == 1)
+            printf("\t\t\t\033[1;37m->\033[0m \033[1;33mPlay Again\033[0m\n");
+        else
+            printf("\t\t\t   Play Again\n");
+
+        if (selected_option == 2)
+            printf("\t\t\t\033[1;37m->\033[0m \033[1;31mQuit\033[0m\n");
+        else
+            printf("\t\t\t   Quit\n");
+    }
+}
+
 int main(){
     system("clear");
-    // welcome();              
+    welcome();              
     while(init()); 
     return 0;
 }
@@ -29,7 +56,7 @@ int check_game_state(){
         terminate = 1;
         return true;
     }
-    if(g_score == NUM_ENEMIES) {
+    if(living_enemy_count == 0) {
         g_win_flag = true;
         return g_win_flag;
     }
@@ -37,32 +64,35 @@ int check_game_state(){
 }
 
 int ask_user(int mode) {
-    int option;
-    int result;
+    int selected_option = 1;
+    char key;
+    print_menu(mode, selected_option);
 
-    do {
-        if (mode){
-            printf("\n1 - Play Next Level.\n");
-            printf("2 - Quit.\n");
-        } else {
-            printf("\n1 - Play Again.\n");
-            printf("2 - Quit.\n");
+    while (1) {
+        key = getchar();
+
+        if (key == '\033') {  
+            getchar();        
+            switch (getchar()) {
+                case UP_ARROW:
+                    if (selected_option > 1)
+                        selected_option--;
+                    break;
+                case DOWN_ARROW:
+                    if (selected_option < 2)
+                        selected_option++;
+                    break;
+            }
+        } else if (key == ENTER_KEY) {
+            break;
         }
 
-        printf("\n>");
-        result = scanf("%d", &option);
-        printf("\n");
-
-        if (result != 1) {
-            printf("Invalid input.\n");
-            while (getchar() != '\n');  // Clearing input buffer
-        } else if (option != 1 && option != 2) {
-            printf("Invalid option. Please enter 1 or 2.\n");
-        }
-
-    } while (option != 1 && option != 2);
-
-    return (option == 1) ? 1 : 0;
+        print_menu(mode, selected_option);
+    }
+    reset_globals();
+    if(selected_option == 1) level_up();
+    else set_conio_mode(1);
+    return (selected_option == 1) ? 1 : 0;
 }
 
 int init(){
@@ -70,12 +100,14 @@ int init(){
     direction = rand() % 2;     // Stablishing a random direction for enemy movement
     set_conio_mode(0);          // Disabling canonical mode
     initialize_player();        // Initializing player properties
+    initialize_player_bullet();
+    initialize_enemy_bullets();
     set_up_grid();              // Placing enemies and player
+    
     initialize_threads();
     // get_terminal_size(&rows, &cols);
 
     // Everything starts here
-
     // Main Loop
     while (!g_is_over){
         pthread_mutex_lock(&grid_lock);     // Entering critical zone
@@ -92,39 +124,25 @@ int init(){
 
         generate_enemy_bullet();            // Enemy bullet generator
         
-        if(check_player_bullet_collision()){
-            // grid[player_bullet.x][player_bullet.y] = ' ';
-            player_bullet.is_active = false;
-        }
+        if(check_player_bullet_collision()) { player_bullet.is_active = false; }
         
-        if(check_enemy_bullet_collision()){ g_lives--;}
-        
+        if(check_enemy_bullet_collision()) { g_lives--;}
         g_is_over = check_game_state();
         pthread_mutex_unlock(&grid_lock);   // Leaving critical zone
         usleep(30000);
     }
-    
-    
+
     finish_threads();                       // Finishing threads
-    set_conio_mode(1);                      // Enabling canonical mode
 
     if(g_win_flag){
-        print_level_completed();
-        usleep(1000000);
-        level_up();
-        reset_globals();
         return ask_user(1);
     } else {
-        print_game_over(0);
-        reset_globals();
         return ask_user(0);
     }
-    
-    printf("end\n"); 
-    return 0;
 }
 
 int initialize_threads(){
+
     if(pthread_mutex_init(&grid_lock, NULL)){
         printf("Error initializing mutex thread.\n");
         return 1;

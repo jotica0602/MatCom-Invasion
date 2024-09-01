@@ -8,9 +8,14 @@ void new_enemy_bullet(Bullet *bullet, int enemy_index){
     bullet->is_active = true;
     bullet->x = enemies[enemy_index].x + 1;
     bullet->y = enemies[enemy_index].y;
-    grid[bullet->x + 1][bullet->y] = grid[bullet->x + 1][bullet->y] == 'M' ? 'M' : '*';
+    if(overlaps_enemy(bullet->x + 1, bullet->y)) { grid[bullet->x + 1][bullet->y] = grid[bullet->x + 1][bullet->y]; } 
+    else { grid[bullet->x + 1][bullet->y] = '*'; }
     enemy_bullet_index = (enemy_bullet_index + 1) % NUM_ENEMIES;
     active_enemy_bullets++;
+}
+
+int overlaps_enemy(int x, int y){
+    return grid[x][y] == '1' || grid[x][y] == '2' || grid[x][y] == '3' || grid[x][y] == '4';
 }
 
 void generate_enemy_bullet(){
@@ -34,11 +39,11 @@ void move_enemy_bullets(){
             continue;
         } 
         else if(enemy_bullets[i].is_active && enemy_bullets[i].x < ROWS - 1) {
-            if(grid[enemy_bullets[i].x][enemy_bullets[i].y] == 'M'){
+            if(overlaps_enemy(enemy_bullets[i].x, enemy_bullets[i].y)){
                 enemy_bullets[i].x++;
                 continue;
             } else {
-                grid[enemy_bullets[i].x][enemy_bullets[i].y] = grid[enemy_bullets[i].x][enemy_bullets[i].y] == 'M' ? 'M' : ' ';
+                grid[enemy_bullets[i].x][enemy_bullets[i].y] = overlaps_enemy(enemy_bullets[i].x, enemy_bullets[i].y) ? grid[enemy_bullets[i].x][enemy_bullets[i].y] : ' ';
                 enemy_bullets[i].x++;
                 grid[enemy_bullets[i].x][enemy_bullets[i].y] = '*';
             }
@@ -85,7 +90,8 @@ int check_player_bullet_collision(){
         if(player_bullet.is_active && player_bullet.x == enemies[i].x && player_bullet.y == enemies[i].y && enemies[i].is_alive){
             enemies[i].is_alive = false;
             grid[enemies[i].x][enemies[i].y] = 'X';
-            g_score++;
+            update_score(enemies[i].type);
+            living_enemy_count--;
             return true;
         }
     }

@@ -9,7 +9,7 @@ typedef struct{
     int moved_right;
 } Player;
 
-void *read_input(void *params);
-void process_player_inputs();
+void *read_input(void *params); // Input reader routine
+void process_player_inputs();   // Player input processing
 
 #endif

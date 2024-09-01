@@ -14,16 +14,13 @@ int *pCols;
 int *terminate;
 }EnemyExplosionParams;
 
-// Display welcome screen.
-void welcome();
-// Draw screen.
-void draw_screen();
 
-void print_game_title();
-void print_game_over();
-void print_level_completed();
-
-void clean_enemy_explosions();
-void *enemy_explosions_routine(void *params);
+void welcome();                                 // Display welcome screen.
+void draw_screen();                             // Draw screen.
+void print_game_title();                        // Prints game title
+void print_game_over();                         // Prints game over
+void print_level_completed();                   // Prints level completed
+void clean_enemy_explosions();                  // Enemy explosions cleaner
+void *enemy_explosions_routine(void *params);   // Enemy explosions cleanear routine
 
 #endif

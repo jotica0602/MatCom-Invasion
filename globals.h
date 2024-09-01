@@ -7,11 +7,14 @@
 #include "enemy.h"
 #include "bullet.h"
 
-#define LEFT 0
-#define RIGHT 1
-#define NUM_ENEMIES 55
-#define ROWS 16
-#define COLS 36
+#define LEFT 0                                  // Left enemy movement direction
+#define RIGHT 1                                 // Right enemy movement direction
+#define NUM_ENEMIES 55                          // Number of enemies
+#define ROWS 16                                 // Grid rows
+#define COLS 36                                 // Grid columns
+#define UP_ARROW 65
+#define DOWN_ARROW 66
+#define ENTER_KEY 10
 
 typedef pthread_mutex_t mutex_thread;
 typedef pthread_t thread;
@@ -40,10 +43,14 @@ extern int g_current_level;                     // Current level
 extern int active_enemy_bullets;                // Active enemy bullets count
 extern int enemy_bullet_index;                  // Actual enemy bullet
 extern int boss_count;                          // Boss count: every 5 enemies killed it will appear
+extern int living_enemy_count;                  // Living enemy count
 
 
 void initialize_player();                       // Initialize player properties
-void set_up_grid();                               // Place enemies and players
-void reset_globals();
-void level_up();
+void initialize_player_bullet();                // Initialize player bullet is_active property
+void initialize_enemy_bullets();                // Initialize enemy bullets is_active property
+void set_up_grid();                             // Place enemies and players
+void update_score(char enemy_type);             // Updates score according to the enemy type
+void reset_globals();                           // Reset global variables
+void level_up();                                // Increases the actual level by 1
 #endif

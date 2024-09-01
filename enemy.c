@@ -13,7 +13,7 @@ void handle_enemies_movement() {
         if(enemies[i].y == 1 || enemies[i].y == COLS - 2){
             boundary_flag = true;
         }
-        grid[enemies[i].x][enemies[i].y] = 'M'; 
+        grid[enemies[i].x][enemies[i].y] = enemies[i].type; 
     }
 
     if(boundary_flag){
@@ -23,7 +23,7 @@ void handle_enemies_movement() {
             grid[enemies[i].x][enemies[i].y] = ' ';
             enemies[i].x++;
             enemies[i].y = direction == LEFT ? enemies[i].y - 1 : enemies[i].y + 1;
-            grid[enemies[i].x][enemies[i].y] = 'M'; 
+            grid[enemies[i].x][enemies[i].y] = enemies[i].type; 
             g_max = g_max < enemies[i].x ? enemies[i].x : g_max;
         }
     }
@@ -32,10 +32,8 @@ void handle_enemies_movement() {
 void *enemies_movement_routine(void *params){
     while(!terminate){
         pthread_mutex_lock(&grid_lock);
-        
         handle_enemies_movement();
         pthread_mutex_unlock(&grid_lock);
-        // usleep(10000);
         usleep(500000);
     }
     return NULL;
