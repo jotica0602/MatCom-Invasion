@@ -46,8 +46,10 @@ void print_menu(int mode, int selected_option) {
 
 int main(){
     system("clear");
+    set_conio_mode(0);  // Disabling console canonical mode
     welcome();              
     while(init()); 
+    set_conio_mode(1);  // Enabling console canonical mode
     return 0;
 }
 
@@ -90,15 +92,17 @@ int ask_user(int mode) {
         print_menu(mode, selected_option);
     }
     reset_globals();
-    if(selected_option == 1) level_up();
-    else set_conio_mode(1);
+    if(selected_option == 1 && mode) { level_up(); }
+    else if(selected_option == 1 && !mode) { 
+        g_score = 0; 
+        g_current_level = 1;    
+    }
     return (selected_option == 1) ? 1 : 0;
 }
 
 int init(){
     srand(time(NULL));          // Initializing random number generator. time(NULL) is the seed.
     direction = rand() % 2;     // Stablishing a random direction for enemy movement
-    set_conio_mode(0);          // Disabling canonical mode
     initialize_player();        // Initializing player properties
     initialize_player_bullet();
     initialize_enemy_bullets();
@@ -141,7 +145,7 @@ int init(){
     }
 }
 
-int initialize_threads(){
+int initialize_threads(){   // Concurrency
 
     if(pthread_mutex_init(&grid_lock, NULL)){
         printf("Error initializing mutex thread.\n");
