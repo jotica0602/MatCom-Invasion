@@ -3,6 +3,7 @@
 #include "visuals.h"
 #include <stdbool.h>
 #include <unistd.h>
+#include "sounds.h"
 
 void spawn_mothership(){
     mothership.is_alive = true;
@@ -29,6 +30,8 @@ void move_mothership(){
         grid[mothership.x][mothership.y] = ' ';
         mothership.is_alive = false;
     }
+
+    play_sound(UFO_MOVEMENT);
 }
 
 void *mothership_routine(){

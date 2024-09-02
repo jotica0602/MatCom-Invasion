@@ -1,5 +1,6 @@
 #include "enemy.h"
 #include "globals.h"
+#include "sounds.h"
 #include <stdbool.h>
 #include <unistd.h>
 
@@ -27,6 +28,8 @@ void handle_enemies_movement() {
             g_max = g_max < enemies[i].x ? enemies[i].x : g_max;
         }
     }
+
+    play_sound(ENEMY_MOVEMENT);
 }
 
 void *enemies_movement_routine(void *params){
