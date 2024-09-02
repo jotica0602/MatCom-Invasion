@@ -6,21 +6,12 @@
 #include "globals.h"
 #include <stdbool.h>
 
-
-typedef struct EnemyExplosionParams{
-char **grid;
-int *pRows;
-int *pCols;
-int *terminate;
-}EnemyExplosionParams;
-
-
-void welcome();                                 // Display welcome screen.
+void display_welcome_screen();                  // Display display_welcome_screen screen.
 void draw_screen();                             // Draw screen.
 void print_game_title();                        // Prints game title
 void print_game_over();                         // Prints game over
 void print_level_completed();                   // Prints level completed
-void clean_explosions();                  // Enemy explosions cleaner
-void *explosions_cleaner_routine(void *params);   // Enemy explosions cleanear routine
+void clean_explosions();                        // Explosions cleaner
+void *explosions_cleaner_routine(void *params); // Enemy explosions cleanear routine
 
 #endif

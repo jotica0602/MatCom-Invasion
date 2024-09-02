@@ -19,7 +19,7 @@ void play_sound(int option){
         system("ffplay -nodisp -autoexit -volume 5 /usr/local/bin/Sounds/playerkilled.wav > /dev/null 2>&1 &");
         break;
     case FAIL:
-        system("ffplay -nodisp -autoexit -volume 35 /usr/local/bin/Sounds/que-es-eso-bob-esponja.mp3 > /dev/null 2>&1 &");
+        system("ffplay -nodisp -autoexit -volume 100 /usr/local/bin/Sounds/que-es-eso-bob-esponja.mp3 > /dev/null 2>&1 &");
         break;
     }
 }

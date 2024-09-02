@@ -1,7 +1,7 @@
 #include "visuals.h"
 #include <unistd.h>
 
-void welcome(){
+void display_welcome_screen(){
     printf("\n\t\t\t\tWELCOME SOLDIER! \n \n");
     sleep(2);
     printf("\tTHE COMMAND PROMPT INVADERS ARE BACK AND EVERYONE NEEDS A HERO \n \n ");

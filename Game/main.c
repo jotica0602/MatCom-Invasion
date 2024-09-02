@@ -26,7 +26,7 @@ int read_high_score();                          // Read high score from file
 int main(){
     system("clear");
     set_conio_mode(0);  // Disabling console canonical mode
-    welcome();              
+    display_welcome_screen();              
     while(init()); 
     set_conio_mode(1);  // Enabling console canonical mode
     return 0;
