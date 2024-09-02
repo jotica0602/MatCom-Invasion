@@ -4,6 +4,7 @@
 #include "bullet.h"
 #include "terminal.h"
 #include "visuals.h"
+#include "shield.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -11,50 +12,25 @@
 #include <stdbool.h>
 #include <time.h>
 
-int init();                 // Initialize game
-void finish_threads();      // Finish all threads
-int check_game_state();     // Checks for game over condition or level completion
-int initialize_threads();   // Initialize all threads
-int ask_user(int mode);     // Asks user 
+int init();                                     // Initialize game
+void finish_threads();                          // Finish all threads
+int check_game_state();                         // Checks for game over condition or level completion
+int initialize_threads();                       // Initialize all threads
+int ask_user(int mode);                         // Asks user according to the actual game state (game over or level completed) to quit or keep playing 
+void print_menu(int mode, int selected_option); // Dynamic selection menu
 
-void print_menu(int mode, int selected_option) {
-    draw_screen();
-    if (mode) {
-        print_level_completed();
-        if (selected_option == 1)
-            printf("\t\t\t\033[1;37m->\033[0m \033[1;33mPlay Next Level\033[0m\n");
-        else
-            printf("\t\t\t   \033[1;37mPlay Next Level\033[0m\n");
-
-        if (selected_option == 2)
-            printf("\t\t\t\033[1;37m->\033[0m \033[1;31mQuit\033[0m\n");
-        else
-            printf("\t\t\t   \033[1;310mQuit\033[m\n");
-    } else {
-        print_game_over();
-        if (selected_option == 1)
-            printf("\t\t\t\033[1;37m->\033[0m \033[1;33mPlay Again\033[0m\n");
-        else
-            printf("\t\t\t   Play Again\n");
-
-        if (selected_option == 2)
-            printf("\t\t\t\033[1;37m->\033[0m \033[1;31mQuit\033[0m\n");
-        else
-            printf("\t\t\t   Quit\n");
-    }
-}
 
 int main(){
     system("clear");
     set_conio_mode(0);  // Disabling console canonical mode
-    welcome();              
+    // welcome();              
     while(init()); 
     set_conio_mode(1);  // Enabling console canonical mode
     return 0;
 }
 
 int check_game_state(){
-    if(g_max == ROWS - 3 || g_lives == 0){
+    if(g_max == ROWS - 3 || g_player_hp == 0){
         terminate = 1;
         return true;
     }
@@ -100,12 +76,41 @@ int ask_user(int mode) {
     return (selected_option == 1) ? 1 : 0;
 }
 
+void print_menu(int mode, int selected_option) {
+    draw_screen();
+    if (mode) {
+        print_level_completed();
+        if (selected_option == 1)
+            printf("\t\t\t\033[1;37m->\033[0m \033[1;33mPlay Next Level\033[0m\n");
+        else
+            printf("\t\t\t   \033[1;37mPlay Next Level\033[0m\n");
+
+        if (selected_option == 2)
+            printf("\t\t\t\033[1;37m->\033[0m \033[1;31mQuit\033[0m\n");
+        else
+            printf("\t\t\t   \033[1;310mQuit\033[m\n");
+    } else {
+        print_game_over();
+        if (selected_option == 1)
+            printf("\t\t\t\033[1;37m->\033[0m \033[1;33mPlay Again\033[0m\n");
+        else
+            printf("\t\t\t   Play Again\n");
+
+        if (selected_option == 2)
+            printf("\t\t\t\033[1;37m->\033[0m \033[1;31mQuit\033[0m\n");
+        else
+            printf("\t\t\t   Quit\n");
+    }
+}
+
 int init(){
     srand(time(NULL));          // Initializing random number generator. time(NULL) is the seed.
     direction = rand() % 2;     // Stablishing a random direction for enemy movement
     initialize_player();        // Initializing player properties
     initialize_player_bullet();
     initialize_enemy_bullets();
+    initialize_shields();
+    initialize_mothership();
     set_up_grid();              // Placing enemies and player
     
     initialize_threads();
@@ -124,13 +129,22 @@ int init(){
             player_bullet.is_active = true;
             grid[player_bullet.x][player_bullet.y] = '^';
             player.can_shoot = false;
+            mothership_count++;
+        }
+
+        if(mothership_count == 10 && !mothership.is_alive) { 
+            spawn_mothership(); 
+            mothership_count = 0;
         }
 
         generate_enemy_bullet();            // Enemy bullet generator
         
-        if(check_player_bullet_collision()) { player_bullet.is_active = false; }
+        if(player_bullet.is_active && check_player_bullet_collision()) { player_bullet.is_active = false; }
         
-        if(check_enemy_bullet_collision()) { g_lives--;}
+        if(check_enemy_bullet_collision()) { g_player_hp--;}
+        
+        handle_shield_collisions();
+        
         g_is_over = check_game_state();
         pthread_mutex_unlock(&grid_lock);   // Leaving critical zone
         usleep(30000);
@@ -188,6 +202,13 @@ int initialize_threads(){   // Concurrency
     } else {
         printf("Enemy explosion cleaner thread successfully created.\n");
     }
+
+    if(pthread_create(&mothership_thread, NULL, mothership_routine, NULL)){
+        printf("Error creating mothership thread.\n");
+        return 1;
+    } else {
+        printf("Mothership thread successfully created.\n");
+    }
 }
 
 void finish_threads(){
@@ -197,5 +218,6 @@ void finish_threads(){
     pthread_join(enemy_bullet_movement_thread, NULL);
     pthread_join(enemy_explosion_cleaner_thread, NULL);
     pthread_join(player_bullet_movement_thread, NULL);
+    pthread_join(mothership_thread, NULL);
     pthread_mutex_destroy(&grid_lock);
 }
