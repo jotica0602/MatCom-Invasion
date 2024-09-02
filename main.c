@@ -26,7 +26,7 @@ int read_high_score();                          // Read high score from file
 int main(){
     system("clear");
     set_conio_mode(0);  // Disabling console canonical mode
-    // welcome();              
+    welcome();              
     while(init()); 
     set_conio_mode(1);  // Enabling console canonical mode
     return 0;
@@ -158,7 +158,7 @@ int init(){
             play_sound(PLAYER_KILLED);                                              // Play player destruction sound 
             g_player_hp--;                                                          // Decrease player hp
             draw_screen();                                                          // Update screen to see the efect
-            usleep(100000);                                                         // Wait 0.1 secs
+            usleep(500000);                                                         // Wait 0.5 secs
             if(g_player_hp > 0){ player.y = direction == LEFT ? 6 : COLS - 6; }     // If player ship is still alive place it in other position
         }
         
