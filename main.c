@@ -23,7 +23,7 @@ void print_menu(int mode, int selected_option); // Dynamic selection menu
 int main(){
     system("clear");
     set_conio_mode(0);  // Disabling console canonical mode
-    // welcome();              
+    welcome();              
     while(init()); 
     set_conio_mode(1);  // Enabling console canonical mode
     return 0;
@@ -129,7 +129,7 @@ int init(){
             player_bullet.is_active = true;
             grid[player_bullet.x][player_bullet.y] = '^';
             player.can_shoot = false;
-            mothership_count++;
+            mothership_count = !mothership.is_alive ? mothership_count + 1 : 0;
         }
 
         if(mothership_count == 10 && !mothership.is_alive) { 

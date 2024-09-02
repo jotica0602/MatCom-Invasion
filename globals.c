@@ -35,7 +35,7 @@ int mothership_count = 0;
 
 void set_up_grid(){
     int index = 0;
-    int lbx = ceil((30 * ROWS)/100);        // lower bound for x (10%)
+    int lbx = ceil((10 * ROWS)/100);        // lower bound for x (10%)
     int ubx = lbx + 5;                      // upper bound for x
     int lby = ceil((23 * COLS)/100);        // lower bound for y (23%)
     int uby = lby + 22;                     // upper bound for y
