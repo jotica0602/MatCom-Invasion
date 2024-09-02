@@ -10,6 +10,6 @@
 - [x]   Game Over functionality:
   - [x]   When the enemy reaches the player.
   - [x]   When player has no more lives left.   
-- [ ]   Shields.
+- [x]   Shields.
 - [x]   Display Score.
 - [x]   Display Lives.   
