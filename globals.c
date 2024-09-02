@@ -10,28 +10,32 @@ thread player_input_thread;
 thread enemy_bullet_movement_thread;
 thread enemy_explosion_cleaner_thread;
 thread player_bullet_movement_thread;
+thread mothership_thread;
 
 char grid[ROWS][COLS];
 Player player;
 Bullet player_bullet;
 Enemy enemies[NUM_ENEMIES];
 Bullet enemy_bullets[MAX_ENEMY_BULLETS];
+Shield shields[NUM_SHIELDS];
+Mothership mothership;
 
 int terminate = 0;
 int direction;
 int g_max = -__INT32_MAX__;
 int g_is_over = false;
 int g_score = 0;
-int g_lives = 3;
+int g_player_hp = 3;
 int g_win_flag = false;
 int g_current_level = 1;
 int active_enemy_bullets = 0;
 int enemy_bullet_index = 0;
 int living_enemy_count = NUM_ENEMIES;
+int mothership_count = 0;
 
 void set_up_grid(){
     int index = 0;
-    int lbx = ceil((10 * ROWS)/100);        // lower bound for x (10%)
+    int lbx = ceil((30 * ROWS)/100);        // lower bound for x (10%)
     int ubx = lbx + 5;                      // upper bound for x
     int lby = ceil((23 * COLS)/100);        // lower bound for y (23%)
     int uby = lby + 22;                     // upper bound for y
@@ -78,6 +82,11 @@ void set_up_grid(){
         }
     }
     
+    // Place shields
+    for(int i = 0; i < NUM_SHIELDS; i++){
+        grid[shields[i].x][shields[i].y] = '5';
+    }
+    
     grid[player.x][player.y] = 'A';
 }
 
@@ -99,6 +108,20 @@ void initialize_enemy_bullets(){
     }
 }
 
+void initialize_shields(){
+    int start_y = COLS / 4;  // First shield position
+
+    for (int i = 0; i < NUM_SHIELDS; i++) {
+        shields[i].x = ROWS - 3;                        // One row before player 
+        shields[i].y = start_y + (i * (COLS / 4));
+        shields[i].hp = SHIELD_HP;
+    }
+}
+
+void initialize_mothership(){
+    mothership.is_alive = false;
+}
+
 void update_score(char enemy_type){
     switch (enemy_type){
         case '1':
@@ -113,16 +136,20 @@ void update_score(char enemy_type){
         case '4':
             g_score += 10;
             break;
+        case '5':
+            g_score += 50;
+            break;
     }
 }
 
 void reset_globals(){
     g_max = -__INT32_MAX__;
     g_is_over = false;
-    g_lives = 3;
+    g_player_hp = 3;
     g_win_flag = false;
     living_enemy_count = NUM_ENEMIES;
     active_enemy_bullets = 0;
+    mothership_count = 0;
     terminate = 0;
 }
 
