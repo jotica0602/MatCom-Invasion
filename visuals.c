@@ -89,6 +89,7 @@ void draw_screen(){
         printf("\n");
     }
     printf("\n\033[1;37mScore:\033[0m\033[1;33m%-d\033[0m-------------------------\033[1;37mLevel:%d\033[0m------------------------\033[1;37mLives:\033[0m\033[1;31m%d\033[0m\t\t\t\n", g_score, g_current_level, g_player_hp);
+    printf("\t\t\t      \033[1;33mHigh Score:%d \033[0m\n", g_high_score);
     // pthread_mutex_unlock(&grid_lock);
 }
 

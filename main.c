@@ -5,6 +5,7 @@
 #include "terminal.h"
 #include "visuals.h"
 #include "shield.h"
+#include "sounds.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -12,18 +13,20 @@
 #include <stdbool.h>
 #include <time.h>
 
+
 int init();                                     // Initialize game
 void finish_threads();                          // Finish all threads
 int check_game_state();                         // Checks for game over condition or level completion
 int initialize_threads();                       // Initialize all threads
 int ask_user(int mode);                         // Asks user according to the actual game state (game over or level completed) to quit or keep playing 
 void print_menu(int mode, int selected_option); // Dynamic selection menu
-
+void update_high_score();                       // Update high score
+int read_high_score();                          // Read high score from file
 
 int main(){
     system("clear");
     set_conio_mode(0);  // Disabling console canonical mode
-    welcome();              
+    // welcome();              
     while(init()); 
     set_conio_mode(1);  // Enabling console canonical mode
     return 0;
@@ -44,6 +47,11 @@ int check_game_state(){
 int ask_user(int mode) {
     int selected_option = 1;
     char key;
+    if(!mode){ 
+        grid[player.x][player.y] = 'X';
+        play_sound(FAIL); 
+    }
+    else { }
     print_menu(mode, selected_option);
 
     while (1) {
@@ -111,6 +119,7 @@ int init(){
     initialize_enemy_bullets();
     initialize_shields();
     initialize_mothership();
+    g_high_score = read_high_score();
     set_up_grid();              // Placing enemies and player
     
     initialize_threads();
@@ -128,6 +137,7 @@ int init(){
             player_bullet.y = player.y;
             player_bullet.is_active = true;
             grid[player_bullet.x][player_bullet.y] = '^';
+            play_sound(PLAYER_SHOT);
             player.can_shoot = false;
             mothership_count = !mothership.is_alive ? mothership_count + 1 : 0;
         }
@@ -141,9 +151,16 @@ int init(){
         
         if(player_bullet.is_active && check_player_bullet_collision()) { player_bullet.is_active = false; }
         
-        if(check_enemy_bullet_collision()) { g_player_hp--;}
-        
         handle_shield_collisions();
+        
+        if(check_enemy_bullet_collision()) { 
+            grid[player.x][player.y] = 'X';                                         // Player dead animation
+            play_sound(PLAYER_KILLED);                                              // Play player destruction sound 
+            g_player_hp--;                                                          // Decrease player hp
+            draw_screen();                                                          // Update screen to see the efect
+            usleep(100000);                                                         // Wait 0.1 secs
+            if(g_player_hp > 0){ player.y = direction == LEFT ? 6 : COLS - 6; }     // If player ship is still alive place it in other position
+        }
         
         g_is_over = check_game_state();
         pthread_mutex_unlock(&grid_lock);   // Leaving critical zone
@@ -152,6 +169,7 @@ int init(){
 
     finish_threads();                       // Finishing threads
 
+    update_high_score();
     if(g_win_flag){
         return ask_user(1);
     } else {
@@ -220,4 +238,61 @@ void finish_threads(){
     pthread_join(player_bullet_movement_thread, NULL);
     pthread_join(mothership_thread, NULL);
     pthread_mutex_destroy(&grid_lock);
+}
+
+int read_high_score() {
+    FILE *file;
+    int saved_score = 0;
+
+    // Open the file for reading
+    file = fopen(HIGH_SCORE_PATH, "r");
+
+    if (file != NULL) {
+        // Try to read the high score from the file
+        if (fscanf(file, "%d", &saved_score) != 1) {
+            // If reading failed, assume there is no valid high score
+            saved_score = 0;
+        }
+        fclose(file);
+    } else {
+        // If the file couldn't be opened, assume there is no valid high score
+        saved_score = 0;
+    }
+
+    return saved_score;
+}
+
+void update_high_score() {
+    FILE *file;
+    int saved_score = 0;
+
+    // Open the file for reading
+    file = fopen(HIGH_SCORE_PATH, "r");
+
+    if (file != NULL) {
+        // Read the high score from the file, if it exists
+        if (fscanf(file, "%d", &saved_score) != 1) {
+            saved_score = 0;  // If it could not be read, assume the score is 0
+        }
+        fclose(file);
+    }
+
+    // Compare the existing high score with the current one
+    if (g_score > saved_score) {
+        // Open the file for writing (overwrite)
+        file = fopen(HIGH_SCORE_PATH, "w");
+        if (file == NULL) {
+            perror("Error opening the file for writing");
+            exit(0);
+            return;
+        }
+
+        // Write the new high score to the file
+        fprintf(file, "%d\n", g_score);
+        fclose(file);
+
+        printf("High score updated to %d\n", g_score);
+    } else {
+        printf("The existing high score (%d) is greater or equal. Not updated.\n", saved_score);
+    }
 }

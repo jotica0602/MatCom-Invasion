@@ -20,6 +20,7 @@
 #define UP_ARROW 65
 #define DOWN_ARROW 66
 #define ENTER_KEY 10
+#define HIGH_SCORE_PATH "/usr/local/bin/highscore.txt"
 
 typedef pthread_mutex_t mutex_thread;
 typedef pthread_t thread;
@@ -45,6 +46,7 @@ extern int direction;                           // Enemy direction
 extern int g_max;                               // Enemy lowest row
 extern int g_is_over;                           // Game over flag
 extern int g_score;                             // Actual score
+extern int g_high_score;                        // High score
 extern int g_player_hp;                         // Player hp
 extern int g_win_flag;                          // Win flag
 extern int g_current_level;                     // Current level

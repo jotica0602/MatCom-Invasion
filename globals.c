@@ -25,6 +25,7 @@ int direction;
 int g_max = -__INT32_MAX__;
 int g_is_over = false;
 int g_score = 0;
+int g_high_score;
 int g_player_hp = 3;
 int g_win_flag = false;
 int g_current_level = 1;
