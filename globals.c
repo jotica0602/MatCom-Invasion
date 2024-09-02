@@ -8,7 +8,7 @@ pthread_mutex_t grid_lock;
 thread enemy_movement_thread;
 thread player_input_thread;
 thread enemy_bullet_movement_thread;
-thread enemy_explosion_cleaner_thread;
+thread explosion_cleaner_thread;
 thread player_bullet_movement_thread;
 thread mothership_thread;
 

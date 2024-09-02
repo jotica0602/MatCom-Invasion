@@ -214,7 +214,7 @@ int initialize_threads(){   // Concurrency
         printf("Enemy bullet movement thread successfully created.\n");
     }
 
-    if(pthread_create(&enemy_explosion_cleaner_thread, NULL, enemy_explosions_routine, NULL)){
+    if(pthread_create(&explosion_cleaner_thread, NULL, explosions_cleaner_routine, NULL)){
         printf("Error creating enemy explosion cleaner thread.\n");
         return 1;
     } else {
@@ -234,7 +234,7 @@ void finish_threads(){
     pthread_cancel(player_input_thread);
     pthread_join(enemy_movement_thread, NULL);
     pthread_join(enemy_bullet_movement_thread, NULL);
-    pthread_join(enemy_explosion_cleaner_thread, NULL);
+    pthread_join(explosion_cleaner_thread, NULL);
     pthread_join(player_bullet_movement_thread, NULL);
     pthread_join(mothership_thread, NULL);
     pthread_mutex_destroy(&grid_lock);

@@ -199,7 +199,7 @@ void print_level_completed() {
 //                                                                                      $$ |                                                  
 //                                                                                      \__|                                                  
 
-void clean_enemy_explosions(){
+void clean_explosions(){
     for(int i = 1; i < ROWS - 3;i++){
         for(int j = 1; j < COLS - 1; j++){
             if(grid[i][j] == 'X'){
@@ -209,10 +209,10 @@ void clean_enemy_explosions(){
     }
 }
 
-void *enemy_explosions_routine(void *params){
+void *explosions_cleaner_routine(void *params){
     while(!terminate){
         pthread_mutex_lock(&grid_lock);
-        clean_enemy_explosions();
+        clean_explosions();
         pthread_mutex_unlock(&grid_lock);
         usleep(500000);
     }

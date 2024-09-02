@@ -30,7 +30,7 @@ extern mutex_thread grid_lock;                  // Mutex thread
 extern thread player_input_thread;              // Player input thread
 extern thread enemy_movement_thread;            // Enemy movement thread
 extern thread enemy_bullet_movement_thread;     // Enemy bullet movement thread
-extern thread enemy_explosion_cleaner_thread;   // Enemy explosion cleaner thread
+extern thread explosion_cleaner_thread;         // Enemy explosion cleaner thread
 extern thread player_bullet_movement_thread;    // Player bullet movement thread
 extern thread mothership_thread;                // Mothership thread
 

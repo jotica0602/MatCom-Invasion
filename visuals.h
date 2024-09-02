@@ -20,7 +20,7 @@ void draw_screen();                             // Draw screen.
 void print_game_title();                        // Prints game title
 void print_game_over();                         // Prints game over
 void print_level_completed();                   // Prints level completed
-void clean_enemy_explosions();                  // Enemy explosions cleaner
-void *enemy_explosions_routine(void *params);   // Enemy explosions cleanear routine
+void clean_explosions();                  // Enemy explosions cleaner
+void *explosions_cleaner_routine(void *params);   // Enemy explosions cleanear routine
 
 #endif
