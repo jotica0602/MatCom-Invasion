@@ -52,6 +52,14 @@ void draw_screen(){
                 case '4':
                     printf("\033[1;33m%2c\033[0m", 'M');
                     break;
+
+                case '5':
+                    printf("%2c", '#');
+                    break;
+
+                case '6':
+                    printf("\033[1;31m%2c\033[0m", 'W');
+                    break;
                 
                 case '*':
                     printf("\033[1;37m%2c\033[0m", grid[i][j]);
@@ -80,7 +88,7 @@ void draw_screen(){
         }
         printf("\n");
     }
-    printf("\n\033[1;37mScore:\033[0m\033[1;33m%-d\033[0m-------------------------\033[1;37mLevel:%d\033[0m------------------------\033[1;37mLives:\033[0m\033[1;31m%d\033[0m\t\t\t\n", g_score, g_current_level, g_lives);
+    printf("\n\033[1;37mScore:\033[0m\033[1;33m%-d\033[0m-------------------------\033[1;37mLevel:%d\033[0m------------------------\033[1;37mLives:\033[0m\033[1;31m%d\033[0m\t\t\t\n", g_score, g_current_level, g_player_hp);
     // pthread_mutex_unlock(&grid_lock);
 }
 
