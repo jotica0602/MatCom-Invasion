@@ -95,6 +95,13 @@ int check_player_bullet_collision(){
             return true;
         }
     }
+
+    if(mothership.x == player_bullet.x && mothership.y == player_bullet.y){
+        grid[mothership.x][mothership.y] = 'X';
+        mothership.is_alive = false;
+        update_score('5');
+        return true;
+    }
     return false;
 }
 
