@@ -8,9 +8,13 @@ void display_welcome_screen(){
     sleep(2);
     printf("\t\tDEFEND YOUR OPERATING SYSTEM NO MATTER WHAT\n \n");
     sleep(2);
-    printf("\t\t\t\tGOOD LUCK!!!");
+    printf("\t\t\t\t MOVE WITH <- ->\n\n");
     sleep(2);
-    printf("\n\n\t\t\t  PRESS ANY KEY TO START");
+    printf("\t\t\t      SHOOT WITH SPACEBAR\n\n");
+    sleep(2);
+    printf("\t\t\t\t GOOD LUCK!!!\n\n");
+    sleep(2);
+    printf("\n\n\t\t\t   PRESS ANY KEY TO START");
     getchar();
 }
 

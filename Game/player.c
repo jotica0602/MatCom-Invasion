@@ -12,16 +12,22 @@ void *read_input(void *params){ // Event
         if (key == '\033'){
             getchar();
             switch(getchar()){
-            // LEFT
-            case 'D':
-                player.moved_left = true;
-                break;
-            // RIGHT
-            case 'C':
-                player.moved_right = true;
-                break;
+                // LEFT
+                case 'D':
+                    player.moved_left = true;
+                    break;
+                // RIGHT
+                case 'C':
+                    player.moved_right = true;
+                    break;
+            }
         }
-        }
+        // if(key == 'a'){
+        //     player.moved_left = true;
+        // }
+        // else if(key == 'd'){
+        //     player.moved_right = true;
+        // }
         else if(key == ' '){
             player.can_shoot = true;
         }

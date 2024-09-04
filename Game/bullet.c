@@ -1,6 +1,7 @@
 #include "bullet.h"
 #include "globals.h"
 #include "sounds.h"
+#include "visuals.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -90,19 +91,25 @@ int check_player_bullet_collision(){
     for(int i = 0; i < NUM_ENEMIES; i++){
         if(player_bullet.is_active && player_bullet.x == enemies[i].x && player_bullet.y == enemies[i].y && enemies[i].is_alive){
             enemies[i].is_alive = false;
-            grid[enemies[i].x][enemies[i].y] = 'X';
+            grid[enemies[i].x][enemies[i].y] = 'X';             // set X for animation
             play_sound(ENEMY_KILLED);
             update_score(enemies[i].type);
             living_enemy_count--;
+            draw_screen();                                      // show animation
+            usleep(50000);                                      // wait to make it visible
+            grid[enemies[i].x][enemies[i].y] = ' ';             // clean it
             return true;
         }
     }
 
     if(mothership.x == player_bullet.x && mothership.y == player_bullet.y && mothership.is_alive){
-        grid[mothership.x][mothership.y] = 'X';
+        grid[mothership.x][mothership.y] = 'X';                 // set X for animation
         play_sound(ENEMY_KILLED);
         mothership.is_alive = false;
-        update_score('5');
+        update_score('5');  
+        draw_screen();                                          // set animation
+        usleep(50000);                                          // wait to make it visible
+        grid[mothership.x][mothership.y] = ' ';                 // clean it
         return true;
     }
     return false;

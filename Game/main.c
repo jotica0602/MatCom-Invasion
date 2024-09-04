@@ -149,7 +149,10 @@ int init(){
 
         generate_enemy_bullet();            // Enemy bullet generator
         
-        if(player_bullet.is_active && check_player_bullet_collision()) { player_bullet.is_active = false; }
+        if(player_bullet.is_active && check_player_bullet_collision()) { 
+            draw_screen();
+            player_bullet.is_active = false; 
+        }
         
         handle_shield_collisions();
         
@@ -160,6 +163,7 @@ int init(){
             draw_screen();                                                          // Update screen to see the efect
             usleep(500000);                                                         // Wait 0.5 secs
             if(g_player_hp > 0){ player.y = direction == LEFT ? 6 : COLS - 6; }     // If player ship is still alive place it in other position
+            grid[player.x][player.y] = 'A';
         }
         
         g_is_over = check_game_state();
@@ -214,13 +218,6 @@ int initialize_threads(){   // Concurrency
         printf("Enemy bullet movement thread successfully created.\n");
     }
 
-    if(pthread_create(&explosion_cleaner_thread, NULL, explosions_cleaner_routine, NULL)){
-        printf("Error creating enemy explosion cleaner thread.\n");
-        return 1;
-    } else {
-        printf("Enemy explosion cleaner thread successfully created.\n");
-    }
-
     if(pthread_create(&mothership_thread, NULL, mothership_routine, NULL)){
         printf("Error creating mothership thread.\n");
         return 1;
@@ -234,7 +231,6 @@ void finish_threads(){
     pthread_cancel(player_input_thread);
     pthread_join(enemy_movement_thread, NULL);
     pthread_join(enemy_bullet_movement_thread, NULL);
-    pthread_join(explosion_cleaner_thread, NULL);
     pthread_join(player_bullet_movement_thread, NULL);
     pthread_join(mothership_thread, NULL);
     pthread_mutex_destroy(&grid_lock);
