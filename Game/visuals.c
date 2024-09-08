@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 void display_welcome_screen(){
+    printf("\033[H\033[J");
     printf("\n\t\t\t\tWELCOME SOLDIER! \n \n");
     sleep(2);
     printf("\tTHE COMMAND PROMPT INVADERS ARE BACK AND EVERYONE NEEDS A HERO \n \n ");
@@ -19,19 +20,21 @@ void display_welcome_screen(){
 }
 
 void draw_screen(){
-    system("clear");
+    // system("clear");
+    // printf("\033[H\033[J");
+    printf("\033c");
     print_game_title();
     // pthread_mutex_lock(&grid_lock);
 
     /*
-    \033[0;30m: Negro
-    \033[0;31m: Rojo
-    \033[0;32m: Verde
-    \033[0;33m: Amarillo
-    \033[0;34m: Azul
+    \033[0;30m: Black
+    \033[0;31m: Red
+    \033[0;32m: Green
+    \033[0;33m: Yello
+    \033[0;34m: Blue
     \033[0;35m: Magenta
-    \033[0;36m: Cian
-    \033[0;37m: Blanco 
+    \033[0;36m: Cyan
+    \033[0;37m: White 
     */   
    
     for (int i = 0; i < ROWS; i++){

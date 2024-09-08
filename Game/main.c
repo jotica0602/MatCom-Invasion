@@ -24,11 +24,10 @@ void update_high_score();                       // Update high score
 int read_high_score();                          // Read high score from file
 
 int main(){
-    system("clear");
-    set_conio_mode(0);  // Disabling console canonical mode
+    set_conio_mode(0);                          // Disabling console canonical mode
     display_welcome_screen();              
     while(init()); 
-    set_conio_mode(1);  // Enabling console canonical mode
+    set_conio_mode(1);                          // Enabling console canonical mode
     return 0;
 }
 
@@ -121,7 +120,6 @@ int init(){
     initialize_mothership();
     g_high_score = read_high_score();
     set_up_grid();              // Placing enemies and player
-    
     initialize_threads();
     // get_terminal_size(&rows, &cols);
 
