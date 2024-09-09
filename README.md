@@ -31,5 +31,6 @@ To run *MatCom Invasion* follow these steps in a Linux enviroment:
     ```bash
     MatComInvasion
     ```
+For more details on the project implementation, refer to the [detailed report](./report.md).
 
 Enjoy ;) 
