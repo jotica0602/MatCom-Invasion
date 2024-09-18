@@ -79,6 +79,7 @@ int ask_user(int mode) {
     else if(selected_option == 1 && !mode) { 
         g_score = 0; 
         g_current_level = 1;    
+        enemy_movement_speed = 1000000;
     }
     return (selected_option == 1) ? 1 : 0;
 }
@@ -276,8 +277,7 @@ void update_high_score() {
         // Open the file for writing (overwrite)
         file = fopen(HIGH_SCORE_PATH, "w");
         if (file == NULL) {
-            perror("Error opening the file for writing");
-            exit(0);
+            perror("Error opening the file for writing.");
             return;
         }
 

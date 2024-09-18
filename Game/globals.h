@@ -54,6 +54,7 @@ extern int active_enemy_bullets;                // Active enemy bullets count
 extern int enemy_bullet_index;                  // Actual enemy bullet
 extern int mothership_count;                    // Mothership count: every 5 enemies killed it will appear
 extern int living_enemy_count;                  // Living enemy count
+extern int enemy_movement_speed;                // Enemy movement speed
 
 
 void initialize_player();                       // Initialize player properties

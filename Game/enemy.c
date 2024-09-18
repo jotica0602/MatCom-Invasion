@@ -37,7 +37,7 @@ void *enemies_movement_routine(void *params){
         pthread_mutex_lock(&grid_lock);
         handle_enemies_movement();
         pthread_mutex_unlock(&grid_lock);
-        usleep(500000);
+        usleep(enemy_movement_speed);
     }
     return NULL;
 }

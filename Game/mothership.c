@@ -39,6 +39,6 @@ void *mothership_routine(){
         pthread_mutex_lock(&grid_lock);
         move_mothership();
         pthread_mutex_unlock(&grid_lock);
-        usleep(350000);
+        usleep(enemy_movement_speed - 150000);
     }
 }

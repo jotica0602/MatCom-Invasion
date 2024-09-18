@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
 #include "globals.h" 
 
 pthread_mutex_t grid_lock;
@@ -33,6 +34,7 @@ int active_enemy_bullets = 0;
 int enemy_bullet_index = 0;
 int living_enemy_count = NUM_ENEMIES;
 int mothership_count = 0;
+int enemy_movement_speed = 1000000;
 
 void set_up_grid(){
     int index = 0;
@@ -155,5 +157,20 @@ void reset_globals(){
 }
 
 void level_up(){
+    switch(g_current_level){
+        case 1:
+            enemy_movement_speed -= 200000;
+            break;
+        case 2:
+            enemy_movement_speed -= 100000;
+            break;
+        case 3:
+            enemy_movement_speed -= 100000;
+            break;
+        case 4:
+            enemy_movement_speed -= 100000;
+            break;
+    }
+
     g_current_level++;
 }
